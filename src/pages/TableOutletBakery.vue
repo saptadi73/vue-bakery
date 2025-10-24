@@ -6,25 +6,37 @@
     <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
       <div class="modal-content">
         <form class="upload-form" @submit.prevent="submitUpload">
-          <h3>Upload Produk Bakery</h3>
+          <h3>Tambah Outlet Baru</h3>
           <div class="form-group">
-            <label>Nama Produk</label>
-            <input v-model="uploadForm.name" type="text" required />
+            <label>Nama Outlet</label>
+            <input v-model="uploadForm.nama" type="text" required />
           </div>
           <div class="form-group">
-            <label>Kode Produk</label>
-            <input v-model="uploadForm.code" type="text" required />
+            <label>Alamat</label>
+            <input v-model="uploadForm.alamat" type="text" />
           </div>
           <div class="form-group">
-            <label>Foto Produk</label>
-            <input @change="onFileChange" type="file" accept="image/*" required />
+            <label>Phone</label>
+            <input v-model="uploadForm.phone" type="text" />
+          </div>
+          <div class="form-group">
+            <label>Kode (Opsional)</label>
+            <input v-model="uploadForm.kode" type="text" />
+          </div>
+          <div class="form-group">
+            <label>Prioritas (Opsional)</label>
+            <input v-model="uploadForm.prioritas" type="number" />
+          </div>
+          <div class="form-group">
+            <label>Gambar (Opsional)</label>
+            <input @change="onFileChange" type="file" accept="image/*" />
           </div>
           <div v-if="imagePreview" class="preview-group">
             <img :src="imagePreview" alt="Preview" class="preview-image" />
           </div>
           <div class="modal-actions">
             <button type="button" class="cancel-btn" @click="showModal = false">Batal</button>
-            <button type="submit" class="submit-btn">Upload</button>
+            <button type="submit" class="submit-btn">Tambah</button>
           </div>
           <div v-if="uploadStatus" class="upload-status">{{ uploadStatus }}</div>
         </form>
@@ -132,6 +144,22 @@
         </form>
       </div>
     </div>
+    <UpdateOutletModal
+      v-if="updateOutletId"
+      :show="showUpdateModal"
+      :outlet-id="updateOutletId"
+      @close="closeUpdateModal"
+      @updated="onOutletUpdated"
+    />
+    <DeleteOutletModal
+      v-if="showDeleteModal"
+      :show="showDeleteModal"
+      :outlet-id="deleteOutletId"
+      :outlet-name="deleteOutletName"
+      @close="closeDeleteModal"
+      @deleted="onOutletDeleted"
+    />
+    <ToastCard v-if="showToast" :message_toast="toastMessage" v-on:close="tutupToast" />
     <loading-overlay />
   </div>
 </template>
@@ -141,12 +169,15 @@
 import axios from 'axios'
 import api from '@/user/axios'
 import LoadingOverlay from '@/components/LoadingOverlay.vue'
+import UpdateOutletModal from '@/components/UpdateOutletModal.vue'
+import DeleteOutletModal from '@/components/DeleteOutletModal.vue'
+import ToastCard from '@/components/ToastCard.vue'
 import { useLoadingStore } from '@/stores/loading'
 import { BASE_URL } from '../base.utils.url.ts'
 
 export default {
   name: 'TableDaftarProductBakery',
-  components: { LoadingOverlay },
+  components: { LoadingOverlay, UpdateOutletModal, DeleteOutletModal, ToastCard },
   data() {
     return {
       BASE_URL,
@@ -158,9 +189,12 @@ export default {
       orderStatus: {},
       isMobile: false,
       uploadForm: {
-        name: '',
-        code: '',
-        file: null,
+        nama: '',
+        alamat: '',
+        phone: '',
+        kode: '',
+        prioritas: '',
+        gambar: null,
       },
       uploadStatus: '',
       showModal: false,
@@ -170,6 +204,13 @@ export default {
       editImageFile: null,
       editImagePreview: '',
       editImageStatus: '',
+      showUpdateModal: false,
+      updateOutletId: null,
+      showDeleteModal: false,
+      deleteOutletId: null,
+      deleteOutletName: '',
+      toastMessage: '',
+      showToast: false,
     }
   },
   setup() {
@@ -191,17 +232,39 @@ export default {
       }
     },
     editProduct(product) {
-      // TODO: Implementasi edit produk (bisa buka modal edit data, dsb)
-      alert('Edit produk: ' + product.name)
+      this.updateOutletId = product.id
+      this.showUpdateModal = true
+    },
+    closeUpdateModal() {
+      this.showUpdateModal = false
+      this.updateOutletId = null
+    },
+    onOutletUpdated() {
+      this.getProducts()
+      this.showToast = true
+      this.toastMessage = 'Outlet berhasil diupdate!'
+    },
+    tutupToast() {
+      this.showToast = false
     },
     deleteProduct(product) {
-      if (confirm(`Hapus produk ${product.name}?`)) {
-        this.products = this.products.filter((p) => p.code !== product.code)
-      }
+      this.deleteOutletId = product.id
+      this.deleteOutletName = product.nama
+      this.showDeleteModal = true
     },
-    openEditImageModal(product) {
-      this.produk_id = product
-      this.editImageProduct = product
+    closeDeleteModal() {
+      this.showDeleteModal = false
+      this.deleteOutletId = null
+      this.deleteOutletName = ''
+    },
+    onOutletDeleted() {
+      this.getProducts()
+      this.showToast = true
+      this.toastMessage = 'Outlet berhasil dihapus!'
+    },
+    openEditImageModal(productId) {
+      this.produk_id = productId
+      this.editImageProduct = this.products.find((p) => p.id === productId)
       this.showEditImageModal = true
       this.editImageFile = null
       this.editImagePreview = ''
@@ -237,29 +300,29 @@ export default {
       this.loadingStore.show()
       try {
         const response = await api.post(
-          `${BASE_URL}outlets/update/image/${this.editImageProduct}`,
+          `${BASE_URL}outlets/update/image/${this.editImageProduct.id}`,
           formData,
           {
             headers: { 'Content-Type': 'multipart/form-data' },
           },
         )
         console.log('Image update response:', response.data)
-
-        // Ganti URL berikut dengan endpoint backend update image
-        // const response = await axios.post('/api/update-product-image', formData, {
-        //   headers: { 'Content-Type': 'multipart/form-data' },
-        // })
-        // Simulasi update lokal:
-        // this.editImageProduct.image = this.editImagePreview
+        // Update local array
+        const index = this.products.findIndex((p) => p.id === this.editImageProduct.id)
+        if (index !== -1) {
+          this.products[index] = response.data.data
+        }
         this.editImageStatus = 'Update berhasil!'
+        this.showToast = true
+        this.toastMessage = 'Gambar outlet berhasil diupdate!'
         setTimeout(() => {
           this.closeEditImageModal()
         }, 1000)
       } catch (err) {
-        this.editImageStatus = err.message || 'Update gagal!'
+        console.error('Update image error:', err)
+        this.editImageStatus = err.response?.data?.message || 'Update gagal!'
       } finally {
         this.loadingStore.hide()
-        this.getProducts() // Refresh daftar produk setelah update
       }
     },
     submitOrder(product) {
@@ -276,7 +339,7 @@ export default {
     },
     onFileChange(e) {
       const file = e.target.files[0]
-      this.uploadForm.file = file
+      this.uploadForm.gambar = file
       if (file) {
         const reader = new FileReader()
         reader.onload = (ev) => {
@@ -288,31 +351,35 @@ export default {
       }
     },
     async submitUpload() {
-      if (!this.uploadForm.name || !this.uploadForm.code || !this.uploadForm.file) {
-        this.uploadStatus = 'Semua field wajib diisi.'
+      if (!this.uploadForm.nama) {
+        this.uploadStatus = 'Nama wajib diisi.'
         return
       }
       const formData = new FormData()
-      formData.append('name', this.uploadForm.name)
-      formData.append('code', this.uploadForm.code)
-      formData.append('file', this.uploadForm.file)
+      formData.append('nama', this.uploadForm.nama)
+      formData.append('alamat', this.uploadForm.alamat)
+      formData.append('phone', this.uploadForm.phone)
+      formData.append('kode', this.uploadForm.kode)
+      formData.append('prioritas', this.uploadForm.prioritas)
+      formData.append('file', this.uploadForm.gambar)
       try {
         // Ganti URL berikut dengan endpoint backend Anda
-        const response = await axios.post('/api/upload-product', formData, {
+        const response = await api.post(`${BASE_URL}outlets/new`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         })
-        this.uploadStatus = response.data.message || 'Upload berhasil!'
+        this.uploadStatus = response.data.message || 'Tambah berhasil!'
+        this.products.push(response.data.data)
+        this.showToast = true
+        this.toastMessage = 'Outlet berhasil ditambahkan!'
         // Reset form
-        this.uploadForm = { name: '', code: '', file: null }
+        this.uploadForm = { nama: '', alamat: '', phone: '', kode: '', prioritas: '', gambar: null }
         setTimeout(() => {
           this.uploadStatus = ''
           this.showModal = false
           this.imagePreview = ''
         }, 1200)
-        // Optionally, tambahkan produk ke list jika backend mengembalikan data produk
-        // this.products.push(response.data)
       } catch (err) {
-        this.uploadStatus = err.message || 'Upload gagal!'
+        this.uploadStatus = err.message || 'Tambah gagal!'
         this.imagePreview = ''
       }
     },
