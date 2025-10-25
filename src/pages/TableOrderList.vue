@@ -1,301 +1,457 @@
 <template>
-  <div class="order-table-container">
-    <h2>Daftar Order</h2>
-    <div class="search-bar">
-      <input
-        v-model="searchQuery"
-        type="text"
-        placeholder="Cari order, produk, outlet..."
-        class="search-input"
-      />
+  <div class="order-list-container">
+    <div class="top-bar">
+      <h2>Daftar Order</h2>
+      <button class="add-btn" @click="$router.push('/create-order')">+ Buat Order Baru</button>
     </div>
+    <div class="search-bar">
+      <input v-model="searchQuery" type="text" placeholder="Cari order..." class="search-input" />
+    </div>
+    <!-- Tabel untuk desktop -->
     <table class="order-table" v-if="!isMobile">
       <thead>
         <tr>
-          <th>Gambar</th>
-          <th>Nama Produk</th>
           <th>No. Order</th>
-          <th>Quantity</th>
-          <th>Nama Outlet</th>
-          <th>Tanggal Order</th>
-          <th>Status</th>
+          <th>Tanggal</th>
+          <th>PIC Name</th>
+          <th>Outlet Name</th>
+          <th>Status Order</th>
+          <th>Aksi</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="order in paginatedOrders" :key="order.no_order">
-          <td>
-            <img
-              :src="
-                order.gambar
-                  ? `${BASE_URL}${order.gambar}`
-                  : `${BASE_URL}uploads/products/default_cake.jpg`
-              "
-              alt="Gambar Produk"
-              class="order-img"
-              loading="lazy"
-            />
-          </td>
-          <td>{{ order.product_name }}</td>
+        <tr v-for="order in filteredOrders" :key="order.id">
           <td>{{ order.no_order }}</td>
-          <td>{{ order.quantity }}</td>
+          <td>{{ formatDate(order.tanggal) }}</td>
+          <td>{{ order.pic_name }}</td>
           <td>{{ order.outlet_name }}</td>
-          <td>{{ order.tanggal }}</td>
           <td>
-            <span
-              :class="[
-                'status-text',
-                order.status === 'Ordered' ? 'status-ordered' : 'status-open',
-              ]"
-            >
-              {{ order.status }}
+            <span :class="getStatusClass(order.status_order)" class="status-badge">
+              {{ order.status_order }}
             </span>
+          </td>
+          <td>
+            <button class="edit-btn" @click="editOrder(order)">Edit</button>
+            <button class="delete-btn" @click="confirmDelete(order)">Delete</button>
           </td>
         </tr>
       </tbody>
     </table>
     <!-- Card untuk mobile -->
-    <div class="order-card-list" v-else>
-      <div class="order-card" v-for="order in paginatedOrders" :key="order.id">
-        <div class="order-row order-img-row">
-          <img
-            :src="
-              order.gambar
-                ? `${BASE_URL}${order.gambar}`
-                : `${BASE_URL}uploads/products/default_cake.jpg`
-            "
-            alt="Gambar Produk"
-            class="order-img"
-            loading="lazy"
-          />
+    <div class="order-card-list" v-if="isMobile">
+      <div v-for="order in filteredOrders" :key="order.id" class="order-card">
+        <div class="order-info">
+          <div class="order-no">{{ order.no_order }}</div>
+          <div class="order-date">{{ formatDate(order.tanggal) }}</div>
+          <div class="order-pic">PIC: {{ order.pic_name }}</div>
+          <div class="order-outlet">Outlet: {{ order.outlet_name }}</div>
+          <div class="order-status">
+            <span :class="getStatusClass(order.status_order)" class="status-badge">
+              {{ order.status_order }}
+            </span>
+          </div>
         </div>
-        <div class="order-row">
-          <span class="order-label">Nama Produk:</span> {{ order.product_name }}
-        </div>
-        <div class="order-row">
-          <span class="order-label">No. Order:</span> {{ order.no_order }}
-        </div>
-        <div class="order-row"><span class="order-label">Quantity:</span> {{ order.quantity }}</div>
-        <div class="order-row">
-          <span class="order-label">Nama Outlet:</span> {{ order.outlet_name }}
-        </div>
-        <div class="order-row">
-          <span class="order-label">Tanggal Order:</span> {{ order.tanggal }}
-        </div>
-        <div class="order-row">
-          <span class="order-label">Status:</span>
-          <span
-            :class="['status-text', order.status === 'Ordered' ? 'status-ordered' : 'status-open']"
-          >
-            {{ order.status }}
-          </span>
+        <div class="order-actions">
+          <button class="edit-btn" @click="editOrder(order)">Edit</button>
+          <button class="delete-btn" @click="confirmDelete(order)">Delete</button>
         </div>
       </div>
     </div>
-    <div class="pagination-bar">
-      <button :disabled="currentPage === 1" @click="currentPage--">&laquo;</button>
-      <span>Page {{ currentPage }} of {{ totalPages }}</span>
-      <button :disabled="currentPage === totalPages" @click="currentPage++">&raquo;</button>
+    <!-- Delete Confirmation Modal -->
+    <div v-if="showDeleteModal" class="modal-overlay" @click.self="showDeleteModal = false">
+      <div class="modal-content">
+        <h3>Hapus Order</h3>
+        <p>
+          Apakah Anda yakin ingin menghapus order <strong>{{ deleteOrder?.no_order }}</strong
+          >?
+        </p>
+        <div class="modal-actions">
+          <button class="cancel-btn" @click="showDeleteModal = false">Batal</button>
+          <button class="delete-confirm-btn" @click="deleteOrderConfirmed">Hapus</button>
+        </div>
+      </div>
     </div>
+
+    <ToastCard v-if="showToast" :message="message_toast" @close="showToast = false" />
+    <LoadingOverlay v-if="isLoading" />
   </div>
-  <LoadingOverlay />
 </template>
 
 <script>
 import axios from 'axios'
-import LoadingOverlay from '@/components/LoadingOverlay.vue'
-import { useLoadingStore } from '@/stores/loading'
-import { BASE_URL } from '@/base.utils.url'
+import { BASE_URL } from '../base.utils.url.ts'
+import ToastCard from '../components/ToastCard.vue'
+import LoadingOverlay from '../components/LoadingOverlay.vue'
+import api from '@/user/axios.js'
 
 export default {
   name: 'TableOrderList',
-  components: { LoadingOverlay },
+  components: { ToastCard, LoadingOverlay },
   data() {
     return {
-      BASE_URL,
-      loadingStore: useLoadingStore(),
       orders: [],
       searchQuery: '',
-      currentPage: 1,
-      pageSize: 5,
       isMobile: false,
+      showDeleteModal: false,
+      deleteOrder: null,
+      showToast: false,
+      message_toast: '',
+      isLoading: false,
     }
   },
   computed: {
     filteredOrders() {
       if (!this.searchQuery) return this.orders
-      const q = this.searchQuery.toLowerCase()
       return this.orders.filter(
-        (o) =>
-          o.no_order.toLowerCase().includes(q) ||
-          o.product_name.toLowerCase().includes(q) ||
-          o.outlet_name.toLowerCase().includes(q) ||
-          o.tanggal.toLowerCase().includes(q) ||
-          o.status.toLowerCase().includes(q),
+        (order) =>
+          order.no_order.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+          order.pic_name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+          order.outlet_name.toLowerCase().includes(this.searchQuery.toLowerCase()),
       )
     },
-    totalPages() {
-      return Math.max(1, Math.ceil(this.filteredOrders.length / this.pageSize))
-    },
-    paginatedOrders() {
-      const start = (this.currentPage - 1) * this.pageSize
-      return this.filteredOrders.slice(start, start + this.pageSize)
-    },
-  },
-  watch: {
-    searchQuery() {
-      this.currentPage = 1
-    },
-    filteredOrders() {
-      if (this.currentPage > this.totalPages) this.currentPage = this.totalPages
-    },
-  },
-  methods: {
-    async fetchOrders() {
-      try {
-        this.loadingStore.show()
-        const response = await axios.get(`${this.BASE_URL}orders/list`)
-        this.orders = response.data.data
-        console.log(this.orders)
-      } catch (error) {
-        console.error('Error fetching orders:', error)
-      } finally {
-        this.loadingStore.hide()
-      }
-    },
-    handleResize() {
-      this.isMobile = window.innerWidth <= 600
-    },
-  },
-  created() {
-    this.fetchOrders()
   },
   mounted() {
-    this.handleResize()
-    window.addEventListener('resize', this.handleResize)
+    this.checkMobile()
+    window.addEventListener('resize', this.checkMobile)
+    this.fetchOrders()
   },
   beforeUnmount() {
-    window.removeEventListener('resize', this.handleResize)
+    window.removeEventListener('resize', this.checkMobile)
+  },
+  methods: {
+    checkMobile() {
+      this.isMobile = window.innerWidth <= 768
+    },
+    async fetchOrders() {
+      this.isLoading = true
+      try {
+        const outletId = localStorage.getItem('outlet_id')
+        if (!outletId) {
+          this.message_toast = 'Outlet ID tidak ditemukan'
+          this.showToast = true
+          return
+        }
+        const response = await axios.get(`${BASE_URL}orders/list/${outletId}`)
+        if (response.data.status) {
+          this.orders = response.data.data
+        } else {
+          this.message_toast = 'Gagal mengambil data order'
+          this.showToast = true
+        }
+      } catch (error) {
+        console.error('Error fetching orders:', error)
+        this.message_toast = 'Terjadi kesalahan saat mengambil data order'
+        this.showToast = true
+      } finally {
+        this.isLoading = false
+      }
+    },
+    formatDate(dateString) {
+      const date = new Date(dateString)
+      return date.toLocaleDateString('id-ID', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    },
+    getStatusClass(status) {
+      const classes = {
+        new: 'status-new',
+        processing: 'status-processing',
+        completed: 'status-completed',
+        cancelled: 'status-cancelled',
+      }
+      return classes[status] || 'status-default'
+    },
+    editOrder(order) {
+      this.$router.push(`/order/edit/${order.id}`)
+    },
+    confirmDelete(order) {
+      this.deleteOrder = order
+      this.showDeleteModal = true
+    },
+    async deleteOrderConfirmed() {
+      this.isLoading = true
+      try {
+        await api.delete(`${BASE_URL}orders/${this.deleteOrder.id}`)
+        this.message_toast = 'Order berhasil dihapus'
+        this.showToast = true
+        this.showDeleteModal = false
+        this.deleteOrder = null
+        // Refresh orders after delete
+        this.fetchOrders()
+      } catch (error) {
+        console.error('Error deleting order:', error)
+        this.message_toast = 'Gagal menghapus order'
+        this.showToast = true
+      } finally {
+        this.isLoading = false
+      }
+    },
   },
 }
-//
 </script>
 
 <style scoped>
-.order-img {
-  width: 54px;
-  height: 54px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid #eee;
+.order-list-container {
+  padding: 20px;
   background: #f5f5f5;
-  margin-right: 4px;
+  min-height: 100vh;
 }
-.order-img-row {
-  justify-content: center;
-  margin-bottom: 10px;
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
 }
+
+.top-bar h2 {
+  margin: 0;
+  color: #333;
+}
+
+.add-btn {
+  background: #4caf50;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.add-btn:hover {
+  background: #45a049;
+}
+
+.search-bar {
+  margin-bottom: 16px;
+}
+
+.search-input {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  width: 300px;
+}
+
+.order-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.order-table th,
+.order-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.order-table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #333;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.status-new {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.status-processing {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.status-completed {
+  background: #e8f5e8;
+  color: #388e3c;
+}
+
+.status-cancelled {
+  background: #ffebee;
+  color: #d32f2f;
+}
+
+.status-default {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.edit-btn {
+  background: #2196f3;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  margin-right: 8px;
+  font-size: 0.9em;
+}
+
+.edit-btn:hover {
+  background: #1976d2;
+}
+
+.delete-btn {
+  background: #f44336;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.delete-btn:hover {
+  background: #d32f2f;
+}
+
+/* Mobile styles */
 .order-card-list {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
+
 .order-card {
-  background: #fafafa;
-  border-radius: 10px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-  padding: 16px 18px;
-  margin-bottom: 4px;
-  font-size: 1.04em;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
-.order-row {
-  margin-bottom: 7px;
+
+.order-info {
+  flex: 1;
+}
+
+.order-no {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.order-date,
+.order-pic,
+.order-outlet {
+  font-size: 0.9em;
+  color: #666;
+  margin-bottom: 2px;
+}
+
+.order-status {
+  margin-top: 8px;
+}
+
+.order-actions {
   display: flex;
   gap: 8px;
 }
-.order-label {
-  font-weight: 600;
-  color: #666;
-  min-width: 110px;
-  display: inline-block;
-}
-@media (max-width: 600px) {
+
+@media (max-width: 768px) {
   .order-table {
     display: none;
   }
   .order-card-list {
     display: flex;
   }
+  .top-bar {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  .search-input {
+    width: 100%;
+  }
 }
-@media (min-width: 601px) {
+
+@media (min-width: 769px) {
   .order-card-list {
     display: none;
   }
 }
-.search-bar {
-  margin-bottom: 16px;
-  text-align: right;
-}
-.search-input {
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid #ddd;
-  width: 220px;
-}
-.pagination-bar {
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 16px;
-  margin-top: 18px;
+  z-index: 1000;
 }
-.pagination-bar button {
+
+.modal-content {
   background: #fff;
-  border: 1px solid #bbb;
-  border-radius: 5px;
-  padding: 4px 12px;
-  font-size: 1em;
-  cursor: pointer;
-  transition: background 0.18s;
-}
-.pagination-bar button:disabled {
-  background: #eee;
-  color: #aaa;
-  cursor: not-allowed;
-}
-.order-table-container {
-  max-width: 900px;
-  margin: 32px auto;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
   padding: 24px;
-}
-.order-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-.order-table th,
-.order-table td {
-  padding: 12px 10px;
-  border-bottom: 1px solid #eee;
+  max-width: 400px;
+  width: 90%;
   text-align: center;
 }
-.status-text {
-  display: inline-block;
-  padding: 4px 14px;
-  border-radius: 12px;
-  font-size: 0.98em;
-  font-weight: 600;
-  letter-spacing: 0.5px;
+
+.modal-content h3 {
+  margin-bottom: 16px;
+  color: #333;
 }
-.status-ordered {
-  background: #e8f5e9;
-  color: #388e3c;
-  border: 1px solid #a5d6a7;
+
+.modal-content p {
+  margin-bottom: 24px;
+  color: #666;
 }
-.status-open {
-  background: #fffde7;
-  color: #fbc02d;
-  border: 1px solid #ffe082;
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.cancel-btn {
+  background: #9e9e9e;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.cancel-btn:hover {
+  background: #757575;
+}
+
+.delete-confirm-btn {
+  background: #f44336;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.delete-confirm-btn:hover {
+  background: #d32f2f;
 }
 </style>

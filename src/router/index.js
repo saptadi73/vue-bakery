@@ -34,6 +34,11 @@ const router = createRouter({
           component: () => import('../components/CreateOrderForm.vue'),
         },
         {
+          path: 'edit/:id',
+          name: 'edit order form',
+          component: () => import('../components/EditOrderForm.vue'),
+        },
+        {
           path: 'summary',
           name: 'summary order',
           component: () => import('../pages/TableOrderSummaryPerProduct.vue'),

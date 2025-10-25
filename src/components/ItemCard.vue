@@ -48,6 +48,32 @@ import { BASE_URL } from '../base.utils.url.ts'
 
 export default {
   name: 'ItemCard',
+  props: {
+    initialProductId: {
+      type: [String, Number],
+      default: '',
+    },
+    initialOutletId: {
+      type: [String, Number],
+      default: '',
+    },
+    initialQuantity: {
+      type: Number,
+      default: 1,
+    },
+    initialPic: {
+      type: String,
+      default: '',
+    },
+    initialProductName: {
+      type: String,
+      default: '',
+    },
+    initialCategoryName: {
+      type: String,
+      default: '',
+    },
+  },
   data() {
     return {
       product_id: '',
@@ -62,8 +88,12 @@ export default {
     }
   },
   mounted() {
-    this.outlet_id = localStorage.getItem('outlet_id') || ''
-    this.pic = localStorage.getItem('username') || ''
+    this.product_id = this.initialProductId || ''
+    this.outlet_id = this.initialOutletId || localStorage.getItem('outlet_id') || ''
+    this.quantity = this.initialQuantity || 1
+    this.pic = this.initialPic || localStorage.getItem('username') || ''
+    this.productNameQuery = this.initialProductName || ''
+    this.categoryQuery = this.initialCategoryName || ''
   },
   methods: {
     onProductNameInput() {
