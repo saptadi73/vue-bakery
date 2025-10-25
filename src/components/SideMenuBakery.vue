@@ -95,6 +95,10 @@ const navItems = reactive([
         url: '/order/list',
       },
       {
+        text: 'Create Order',
+        url: '/order/create',
+      },
+      {
         text: 'Order Summary Per Produk',
         url: '/order/summary',
       },

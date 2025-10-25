@@ -1,0 +1,7 @@
+- [x] Create CreateOrderForm.vue component
+- [x] Add form fields: No. Order (readonly), Nama Outlet, Nama PIC, Tanggal Waktu (auto)
+- [x] Fetch outlet name from API on mounted
+- [x] Set PIC from localStorage
+- [x] Set dateTime to current date/time
+- [x] Include ItemCard component for items
+- [x] Add submit button (placeholder)

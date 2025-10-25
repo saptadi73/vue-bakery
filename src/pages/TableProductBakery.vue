@@ -72,9 +72,7 @@
                 :alt="product.nama"
                 class="product-image"
               />
-              <button class="edit-img-btn" @click.prevent="openEditImageModal(product.id)">
-                ✎
-              </button>
+              <button class="edit-img-btn" @click.prevent="openEditImageModal(product)">✎</button>
             </div>
           </td>
           <td>{{ product.nama }}</td>
@@ -104,7 +102,7 @@
             :alt="product.name"
             class="product-image"
           />
-          <button class="edit-img-btn" @click.prevent="openEditImageModal(product.id)">✎</button>
+          <button class="edit-img-btn" @click.prevent="openEditImageModal(product)">✎</button>
         </div>
         <div class="product-info">
           <div class="product-name">{{ product.nama }}</div>
@@ -128,7 +126,7 @@
     <div v-if="showEditImageModal" class="modal-overlay" @click.self="closeEditImageModal">
       <div class="modal-content">
         <form class="upload-form" @submit.prevent="submitEditImage">
-          <h3>Edit Foto Produk {{ produk_id }}</h3>
+          <h3>Edit Foto Produk {{ produk_id }} - {{ produk_name }}</h3>
           <div class="form-group">
             <label>Foto Baru</label>
             <input @change="onEditImageFileChange" type="file" accept="image/*" required />
@@ -182,6 +180,7 @@ export default {
       message_toast: '',
       BASE_URL,
       produk_id: null,
+      produk_name: '',
       searchQuery: '',
       products: [],
       orderQuantities: {},
@@ -251,8 +250,9 @@ export default {
       this.showDeleteModal = true
     },
     openEditImageModal(product) {
-      this.produk_id = product
-      this.editImageProduct = product
+      this.produk_id = product.id
+      this.produk_name = product.nama
+      this.editImageProduct = product.id
       this.showEditImageModal = true
       this.editImageFile = null
       this.editImagePreview = ''
@@ -264,6 +264,8 @@ export default {
       this.editImageFile = null
       this.editImagePreview = ''
       this.editImageStatus = ''
+      this.produk_id = null
+      this.produk_name = ''
     },
     closeUpdateModal() {
       this.showUpdateModal = false

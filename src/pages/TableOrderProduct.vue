@@ -29,6 +29,17 @@
     </div>
     <div class="search-bar">
       <input v-model="searchQuery" type="text" placeholder="Cari produk..." class="search-input" />
+      <select v-model="selectedCategory" class="category-filter">
+        <option value="">Semua Kategori</option>
+        <option v-for="category in uniqueCategories" :key="category" :value="category">
+          {{ category }}
+        </option>
+      </select>
+      <select v-model="selectedStatus" class="status-filter">
+        <option value="">Semua Status</option>
+        <option value="Ordered">Ordered</option>
+        <option value="Open">Open</option>
+      </select>
     </div>
     <!-- Tabel untuk desktop -->
     <table class="product-table" v-if="!isMobile">
@@ -37,6 +48,7 @@
           <th>Gambar</th>
           <th>Nama Produk</th>
           <th>Kode Produk</th>
+          <th>Kategori</th>
           <th>Status</th>
           <th>Order (Qty)</th>
           <th>Aksi</th>
@@ -59,31 +71,48 @@
             </div>
           </td>
           <td>{{ product.nama }}</td>
-          <td>{{ product.kode }}</td>
+          <td>{{ product.product_kode }}</td>
+          <td>{{ product.category_name }}</td>
           <td>
             <span
               :class="[
                 'status-text',
-                orderStatus[product.id] === 'Ordered' ? 'status-ordered' : 'status-open',
+                orderStatus[product.product_id] === 'Ordered' ? 'status-ordered' : 'status-open',
               ]"
             >
-              {{ orderStatus[product.id] }}
+              {{ orderStatus[product.product_id] }}
             </span>
           </td>
           <td>
             <input
               type="number"
               min="1"
-              v-model.number="orderQuantities[product.id]"
+              v-model.number="orderQuantities[product.product_id]"
               class="qty-input"
             />
           </td>
           <td class="aksi-cell">
-            <button @click="submitOrder(product)" class="submit-btn">Order</button>
-            <button class="icon-btn" @click="editProduct(product)" title="Edit">
+            <button
+              v-if="orderStatus[product.product_id] !== 'Ordered'"
+              @click="submitOrder(product)"
+              class="submit-btn"
+            >
+              Order
+            </button>
+            <button
+              v-if="orderStatus[product.product_id] === 'Ordered'"
+              class="icon-btn"
+              @click="editProduct(product)"
+              title="Edit"
+            >
               <span class="icon-edit" aria-label="Edit">✏️</span>
             </button>
-            <button class="icon-btn" @click="deleteProduct(product)" title="Delete">
+            <button
+              v-if="orderStatus[product.product_id] === 'Ordered'"
+              class="icon-btn"
+              @click="deleteProduct(product)"
+              title="Delete"
+            >
               <span class="icon-delete" aria-label="Delete">🗑️</span>
             </button>
           </td>
@@ -107,30 +136,47 @@
         </div>
         <div class="product-info">
           <div class="product-name">{{ product.nama }}</div>
-          <div class="product-code">Kode: {{ product.kode }}</div>
+          <div class="product-code">Kode: {{ product.product_kode }}</div>
+          <div class="product-category">Kategori: {{ product.category_name }}</div>
           <div class="product-status">
             <label class="status-label">Status:</label>
             <span
               :class="[
                 'status-text',
-                orderStatus[product.code] === 'Ordered' ? 'status-ordered' : 'status-open',
+                orderStatus[product.product_id] === 'Ordered' ? 'status-ordered' : 'status-open',
               ]"
             >
-              {{ orderStatus[product.code] }}
+              {{ orderStatus[product.product_id] }}
             </span>
           </div>
           <div class="product-order">
             <input
               type="number"
               min="1"
-              v-model.number="orderQuantities[product.code]"
+              v-model.number="orderQuantities[product.product_id]"
               class="qty-input"
             />
-            <button @click="submitOrder(product)" class="submit-btn">Order</button>
-            <button class="icon-btn" @click="editProduct(product)" title="Edit">
+            <button
+              v-if="orderStatus[product.product_id] !== 'Ordered'"
+              @click="submitOrder(product)"
+              class="submit-btn"
+            >
+              Order
+            </button>
+            <button
+              v-if="orderStatus[product.product_id] === 'Ordered'"
+              class="icon-btn"
+              @click="editProduct(product)"
+              title="Edit"
+            >
               <span class="icon-edit" aria-label="Edit">✏️</span>
             </button>
-            <button class="icon-btn" @click="deleteProduct(product)" title="Delete">
+            <button
+              v-if="orderStatus[product.product_id] === 'Ordered'"
+              class="icon-btn"
+              @click="deleteProduct(product)"
+              title="Delete"
+            >
               <span class="icon-delete" aria-label="Delete">🗑️</span>
             </button>
           </div>
@@ -165,6 +211,7 @@
 <script>
 // ...existing code...
 import axios from 'axios'
+import api from '@/user/axios'
 import { BASE_URL } from '../base.utils.url'
 import { useLoadingStore } from '@/stores/loading'
 import LoadingOverlay from '@/components/LoadingOverlay.vue'
@@ -177,6 +224,9 @@ export default {
       BASE_URL,
       searchQuery: '',
       products: [],
+      categories: [],
+      selectedCategory: '',
+      selectedStatus: '',
       orderQuantities: {},
       orderDates: {},
       orderStatus: {},
@@ -194,6 +244,9 @@ export default {
       editImageFile: null,
       editImagePreview: '',
       editImageStatus: '',
+      form: {
+        product_id: null,
+      },
     }
   },
   setup() {
@@ -202,24 +255,67 @@ export default {
   },
   created() {
     this.getProducts()
+    this.getCategories()
   },
   methods: {
     async getProducts() {
+      const outletId = localStorage.getItem('outlet_id')
       try {
         this.loadingStore.show()
         // Ganti URL berikut dengan endpoint backend Anda
-        const response = await axios.get(`${BASE_URL}products`)
+        const response = await axios.get(`${BASE_URL}orders/leftjoin/${outletId}`)
         this.products = response.data.data
         console.log('Fetched products:', this.products)
+        // Inisialisasi quantity dan status berdasarkan data dari API
+        this.products.forEach((p) => {
+          const key = p.product_id // Menggunakan product_id sebagai key unik
+          this.orderQuantities[key] = p.quantity || 1
+          this.orderStatus[key] = p.quantity ? 'Ordered' : 'Open'
+        })
       } catch (err) {
         console.error('Error fetching products:', err)
       } finally {
         this.loadingStore.hide()
       }
     },
-    editProduct(product) {
-      // TODO: Implementasi edit produk (bisa buka modal edit data, dsb)
-      alert('Edit produk: ' + product.name)
+    async getCategories() {
+      try {
+        const response = await api.get(`${BASE_URL}categories`)
+        this.categories = response.data.data
+      } catch (error) {
+        console.error('Error fetching categories:', error)
+      }
+    },
+    async editProduct(product) {
+      const key = product.product_id
+      const qty = this.orderQuantities[key] || 0
+      if (qty < 1) {
+        alert('Masukkan jumlah order yang valid!')
+        return
+      }
+      const outletId = localStorage.getItem('outlet_id')
+      const pic = localStorage.getItem('username')
+      if (!outletId || !pic) {
+        alert('Data outlet atau PIC tidak ditemukan. Silakan login ulang.')
+        return
+      }
+      const orderData = {
+        product_id: product.product_id,
+        quantity: qty,
+        outlet_id: outletId,
+        pic: pic,
+      }
+      try {
+        const response = await api.put(`${BASE_URL}orders/${product.order_id}`, orderData)
+        console.log('Order updated:', response.data)
+        alert(`Order untuk ${product.nama} berhasil diupdate menjadi ${qty}!`)
+        this.orderQuantities[key] = qty
+        // Refresh data setelah update
+        this.getProducts()
+      } catch (error) {
+        console.error('Error updating order:', error)
+        alert(`Gagal update order: ${error.response?.data?.message || error.message}`)
+      }
     },
     deleteProduct(product) {
       if (confirm('Yakin hapus produk: ' + product.name + '?')) {
@@ -277,14 +373,37 @@ export default {
         this.editImageStatus = err.response?.data?.message || 'Update gagal!'
       }
     },
-    submitOrder(product) {
-      const qty = this.orderQuantities[product.code] || 0
+    async submitOrder(product) {
+      const key = product.product_id // Menggunakan product_id sebagai key
+      const qty = this.orderQuantities[key] || 0
       if (qty < 1) {
         alert('Masukkan jumlah order yang valid!')
         return
       }
-      alert(`Order untuk ${product.name} (${product.code}) sebanyak ${qty} berhasil disubmit!`)
-      this.orderQuantities[product.code] = 1
+      const outletId = localStorage.getItem('outlet_id')
+      const pic = localStorage.getItem('username')
+      if (!outletId || !pic) {
+        alert('Data outlet atau PIC tidak ditemukan. Silakan login ulang.')
+        return
+      }
+      const orderData = {
+        product_id: product.product_id, // Menggunakan product_id
+        quantity: qty,
+        outlet_id: outletId,
+        pic: pic,
+      }
+      try {
+        const response = await api.post(`${BASE_URL}orders/new`, orderData)
+        console.log('Order submitted:', response.data)
+        alert(`Order untuk ${product.nama} sebanyak ${qty} berhasil disubmit!`)
+        this.orderQuantities[key] = qty // tetap gunakan qty yang baru
+        this.orderStatus[key] = 'Ordered'
+        // Refresh data setelah submit
+        this.getProducts()
+      } catch (error) {
+        console.error('Error submitting order:', error)
+        alert(`Gagal mengirim order: ${error.response?.data?.message || error.message}`)
+      }
     },
     handleResize() {
       this.isMobile = window.innerWidth <= 600
@@ -333,23 +452,31 @@ export default {
     },
   },
   computed: {
+    uniqueCategories() {
+      const categories = this.products.map((p) => p.category_name).filter(Boolean)
+      return [...new Set(categories)]
+    },
     filteredProducts() {
-      if (!this.searchQuery) return this.products
-      const q = this.searchQuery.toLowerCase()
-      return this.products.filter(
-        (p) => p.nama.toLowerCase().includes(q) || p.kode.toLowerCase().includes(q),
-      )
+      let filtered = this.products
+      if (this.searchQuery) {
+        const q = this.searchQuery.toLowerCase()
+        filtered = filtered.filter(
+          (p) =>
+            (p.nama && p.nama.toLowerCase().includes(q)) ||
+            (p.product_kode && p.product_kode.toLowerCase().includes(q)),
+        )
+      }
+      if (this.selectedCategory) {
+        filtered = filtered.filter((p) => p.category_name == this.selectedCategory)
+      }
+      if (this.selectedStatus) {
+        filtered = filtered.filter((p) => this.orderStatus[p.product_id] == this.selectedStatus)
+      }
+      return filtered
     },
   },
   // ...existing code...
   mounted() {
-    // Inisialisasi quantity default
-    const today = new Date().toISOString().slice(0, 10)
-    this.products.forEach((p) => {
-      this.orderQuantities[p.id] = 1
-      this.orderDates[p.id] = today
-      this.orderStatus[p.id] = 'Open'
-    })
     this.handleResize()
     window.addEventListener('resize', this.handleResize)
   },
@@ -563,12 +690,27 @@ export default {
 .search-bar {
   margin-bottom: 16px;
   text-align: right;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 .search-input {
   padding: 8px 12px;
   border-radius: 6px;
   border: 1px solid #ddd;
   width: 220px;
+}
+.category-filter {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  width: 150px;
+}
+.status-filter {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  width: 120px;
 }
 .product-table {
   width: 100%;
@@ -640,6 +782,10 @@ export default {
 .product-code {
   color: #888;
   font-size: 0.95em;
+}
+.product-category {
+  color: #666;
+  font-size: 0.9em;
 }
 .product-order {
   display: flex;

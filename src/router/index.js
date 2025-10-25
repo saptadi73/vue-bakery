@@ -29,6 +29,11 @@ const router = createRouter({
           component: () => import('../pages/TableOrderList.vue'),
         },
         {
+          path: 'create',
+          name: 'create order form',
+          component: () => import('../components/CreateOrderForm.vue'),
+        },
+        {
           path: 'summary',
           name: 'summary order',
           component: () => import('../pages/TableOrderSummaryPerProduct.vue'),

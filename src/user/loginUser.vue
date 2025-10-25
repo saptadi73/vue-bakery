@@ -94,10 +94,12 @@ async function login() {
     const role = response.data.data.role
     const outlet_id = response.data.data.outlet_id
     const outlet_name = response.data.data.outlet_name
+    const username = response.data.data.user.name
     // console.log('datanya role', role);
     localStorage.setItem('token', token)
     localStorage.setItem('role', role)
     localStorage.setItem('email', email)
+    localStorage.setItem('username', username)
     localStorage.setItem('role_id', role_id)
     localStorage.setItem('outlet_id', outlet_id)
     localStorage.setItem('outlet_name', outlet_name)

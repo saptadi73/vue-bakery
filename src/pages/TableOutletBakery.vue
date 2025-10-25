@@ -70,9 +70,7 @@
                 :alt="product.nama"
                 class="product-image"
               />
-              <button class="edit-img-btn" @click.prevent="openEditImageModal(product.id)">
-                ✎
-              </button>
+              <button class="edit-img-btn" @click.prevent="openEditImageModal(product)">✎</button>
             </div>
           </td>
           <td>{{ product.nama }}</td>
@@ -105,7 +103,7 @@
             :alt="product.name"
             class="product-image"
           />
-          <button class="edit-img-btn" @click.prevent="openEditImageModal(product.id)">✎</button>
+          <button class="edit-img-btn" @click.prevent="openEditImageModal(product)">✎</button>
         </div>
         <div class="product-info">
           <div class="product-name">{{ product.nama }}</div>
@@ -128,7 +126,7 @@
     <div v-if="showEditImageModal" class="modal-overlay" @click.self="closeEditImageModal">
       <div class="modal-content">
         <form class="upload-form" @submit.prevent="submitEditImage">
-          <h3>Edit Foto Produk {{ produk_id }}</h3>
+          <h3>Edit Foto Outlet {{ produk_id }} - {{ outlet_name }}</h3>
           <div class="form-group">
             <label>Foto Baru</label>
             <input @change="onEditImageFileChange" type="file" accept="image/*" required />
@@ -182,6 +180,7 @@ export default {
     return {
       BASE_URL,
       produk_id: null,
+      outlet_name: '',
       searchQuery: '',
       products: [],
       orderQuantities: {},
@@ -262,9 +261,10 @@ export default {
       this.showToast = true
       this.toastMessage = 'Outlet berhasil dihapus!'
     },
-    openEditImageModal(productId) {
-      this.produk_id = productId
-      this.editImageProduct = this.products.find((p) => p.id === productId)
+    openEditImageModal(outlet) {
+      this.produk_id = outlet.id
+      this.outlet_name = outlet.nama
+      this.editImageProduct = outlet
       this.showEditImageModal = true
       this.editImageFile = null
       this.editImagePreview = ''
@@ -276,6 +276,8 @@ export default {
       this.editImageFile = null
       this.editImagePreview = ''
       this.editImageStatus = ''
+      this.produk_id = null
+      this.outlet_name = ''
     },
     onEditImageFileChange(e) {
       const file = e.target.files[0]
