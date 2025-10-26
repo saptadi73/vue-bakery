@@ -101,6 +101,11 @@ const router = createRouter({
           name: 'daftar produk',
           component: () => import('../pages/TableProductBakery.vue'),
         },
+        {
+          path: 'summary',
+          name: 'Product Summary',
+          component: () => import('../pages/TableProductSummary.vue'),
+        },
       ],
     },
     {
@@ -129,6 +134,11 @@ const router = createRouter({
           path: 'distribution/:id/:nama/:kode',
           name: 'history kitchen',
           component: () => import('../pages/TabletStockDistributed.vue'),
+        },
+        {
+          path: 'adjustment',
+          name: 'adjustment',
+          component: () => import('../pages/InventoryAdjustemnt.vue'),
         },
       ],
     },

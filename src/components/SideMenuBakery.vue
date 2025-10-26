@@ -115,10 +115,18 @@ const navItems = reactive([
       {
         text: 'Create Stock',
         url: '/kitchen/stock',
-        badge: {
-          text: 20,
-          style: '',
-        },
+        // badge: {
+        //   text: 20,
+        //   style: '',
+        // },
+      },
+      {
+        text: 'adjustment',
+        url: '/kitchen/adjustment',
+      },
+      {
+        text: 'summary',
+        url: '/produk/summary',
       },
     ],
   },
