@@ -140,6 +140,10 @@ const navItems = reactive([
     title: false,
     children: [
       {
+        text: 'Delivery Orders',
+        url: '/delivery/orders',
+      },
+      {
         text: 'Distribusi Produk',
         url: '/delivery/group',
       },

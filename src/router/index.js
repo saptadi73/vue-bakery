@@ -21,7 +21,7 @@ const router = createRouter({
         {
           path: 'all',
           name: 'all order',
-          component: () => import('../pages/TableOrderProduct.vue'),
+          component: () => import('../pages/TableOrderListForHQ.vue'),
         },
         {
           path: 'list',
@@ -56,6 +56,16 @@ const router = createRouter({
       component: () => import('../layouts/LayoutDefaultBakery.vue'),
       children: [
         {
+          path: 'orders',
+          name: 'delivery orders',
+          component: () => import('../pages/TableDeliveryOrders.vue'),
+        },
+        {
+          path: 'orders/:id',
+          name: 'detail delivery order',
+          component: () => import('../pages/DetailDeliveryOrder.vue'),
+        },
+        {
           path: 'group',
           name: 'delivery group',
           component: () => import('../pages/TableOutletDistribusiProduk.vue'),
@@ -64,6 +74,11 @@ const router = createRouter({
           path: 'outlet/:id/:kode/:nama',
           name: 'delivery produk',
           component: () => import('../pages/CardReportDeliveryProduk.vue'),
+        },
+        {
+          path: 'create/:id',
+          name: 'create delivery order',
+          component: () => import('../components/DeliveryOrderForm.vue'),
         },
       ],
     },

@@ -1,0 +1,321 @@
+<template>
+  <div class="edit-order-form">
+    <h2>Edit Order - {{ orderData.no_order }}</h2>
+    <form @submit.prevent="submitEditOrder">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Tanggal Waktu</label>
+          <input v-model="tanggal" type="text" readonly class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>Nama Outlet</label>
+          <input v-model="outlet_name" type="text" readonly class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>Nama PIC</label>
+          <input v-model="pic_name" type="text" readonly class="form-control" />
+        </div>
+        <div class="form-group full-width">
+          <label>Keterangan (Opsional)</label>
+          <textarea
+            v-model="keterangan"
+            placeholder="Tambahkan keterangan jika diperlukan"
+            class="form-control"
+          ></textarea>
+        </div>
+      </div>
+      <div class="items-section">
+        <h3>Items</h3>
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Product Name</th>
+              <th>Quantity</th>
+              <th>Disediakan</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(item, index) in items" :key="index">
+              <td>
+                {{ item.productNameQuery }}
+              </td>
+              <td>
+                {{ item.quantity }}
+              </td>
+              <td>
+                {{ item.quantity_provider || 0 }}
+              </td>
+              <td>
+                <button
+                  v-if="item.quantity !== (item.quantity_provider || 0)"
+                  @click="checkStock(item)"
+                  class="check-btn"
+                >
+                  Please Cek
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="cancel-btn" @click="$router.push('/order/list')">Batal</button>
+        <button type="submit" class="submit-btn" :disabled="isSubmitDisabled">
+          Create Delivery Order
+        </button>
+      </div>
+    </form>
+    <ToastCard v-if="showToast" :message="message_toast" @close="showToast = false" />
+    <LoadingOverlay v-if="isLoading" />
+  </div>
+</template>
+
+<script>
+import axios from 'axios'
+import ToastCard from './ToastCard.vue'
+import LoadingOverlay from './LoadingOverlay.vue'
+import { BASE_URL } from '../base.utils.url.ts'
+import api from '@/user/axios'
+
+export default {
+  name: 'EditOrderForm',
+  components: { ToastCard, LoadingOverlay },
+  props: {},
+  data() {
+    return {
+      orderId: null,
+      orderData: {},
+      outlet_name: '',
+      pic_name: '',
+      tanggal: '',
+      keterangan: '',
+      items: [], // Start with empty array
+      showToast: false,
+      message_toast: '',
+      isLoading: false,
+    }
+  },
+  mounted() {
+    this.orderId = this.$route.params.id
+    this.fetchOrderDetail()
+  },
+  computed: {
+    isSubmitDisabled() {
+      return this.items.some((item) => !item.quantity_provider || item.quantity_provider === 0)
+    },
+  },
+  methods: {
+    async fetchOrderDetail() {
+      this.isLoading = true
+      try {
+        const response = await axios.get(`${BASE_URL}orders/${this.orderId}`)
+        if (response.data.status) {
+          this.orderData = response.data.data
+          this.outlet_name = this.orderData.outlet_name
+          this.pic_name = this.orderData.pic_name
+          this.tanggal = this.formatDateTime(this.orderData.tanggal)
+          this.keterangan = this.orderData.keterangan || ''
+
+          // Populate items from order_items
+          this.items = this.orderData.order_items.map((item) => ({
+            product_id: item.product_id,
+            outlet_id: item.outlet_id,
+            quantity: item.quantity,
+            quantity_provider: item.quantity_provider,
+            pic: item.pic,
+            provider_id: item.provider_id,
+            productNameQuery: item.product.nama,
+            suggestions: [],
+            showSuggestions: false,
+          }))
+
+          // If no items, add empty one
+          if (this.items.length === 0) {
+            this.items = [
+              {
+                product_id: '',
+                provider_id: '',
+                outlet_id: localStorage.getItem('outlet_id') || '',
+                quantity: 1,
+                pic: localStorage.getItem('username') || '',
+                productNameQuery: '',
+                suggestions: [],
+                showSuggestions: false,
+              },
+            ]
+          }
+
+          console.log('Data Order: ', response.data)
+        } else {
+          this.message_toast = 'Gagal mengambil detail order'
+          this.showToast = true
+        }
+      } catch (error) {
+        console.error('Error fetching order detail:', error)
+        this.message_toast = 'Terjadi kesalahan saat mengambil detail order'
+        this.showToast = true
+      } finally {
+        this.isLoading = false
+      }
+    },
+    formatDateTime(dateString) {
+      const date = new Date(dateString)
+      return date.toLocaleDateString('id-ID', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    },
+
+    checkStock(item) {
+      this.$router.push(
+        `/order/summary/outlet/${item.product_id}/${encodeURIComponent(item.productNameQuery)}`,
+      )
+    },
+    async submitEditOrder() {
+      this.isLoading = true
+      try {
+        // Collect data from items array
+        const orderData = {
+          order_id: this.orderId,
+          keterangan: this.keterangan,
+          pic: localStorage.getItem('username'),
+          items: this.items.map((item) => ({
+            product_id: parseInt(item.product_id),
+            outlet_id: parseInt(item.outlet_id),
+            quantity: item.quantity_provider || item.quantity,
+            pic: item.pic,
+            provider_id: item.provider_id,
+          })),
+        }
+        console.log('Create Delivery Order Data:', orderData)
+        const response = await api.post(`${BASE_URL}delivery-orders/new`, orderData)
+        this.message_toast = response.data.message || 'Delivery Order berhasil dibuat'
+        this.showToast = true
+        setTimeout(() => {
+          this.$router.push('/order/list')
+        }, 2000)
+      } catch (error) {
+        console.error('Error updating order:', error)
+        this.message_toast = 'Failed to create delivery order. Please try again.'
+        this.showToast = true
+      } finally {
+        this.isLoading = false
+      }
+    },
+  },
+}
+</script>
+
+<style scoped>
+.edit-order-form {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.full-width {
+  grid-column: span 2;
+}
+.form-group {
+  margin-bottom: 16px;
+}
+.form-control {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+textarea.form-control {
+  resize: vertical;
+  min-height: 80px;
+}
+.items-section {
+  margin-bottom: 20px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+.cancel-btn {
+  background: #9e9e9e;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+.cancel-btn:hover {
+  background: #757575;
+}
+.submit-btn {
+  background: #2196f3;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 16px;
+}
+.submit-btn:hover:not(:disabled) {
+  background: #1976d2;
+}
+
+.submit-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.items-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.items-table th,
+.items-table td {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.items-table th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+.items-table td input {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.check-btn {
+  background: #ff9800;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.check-btn:hover {
+  background: #f57c00;
+}
+</style>

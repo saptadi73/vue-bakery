@@ -79,9 +79,9 @@
             <button
               @click="sendStock(item)"
               class="send-btn"
-              :disabled="!item.sendQuantity || item.sendQuantity <= 0"
+              :disabled="!item.sendQuantity || item.sendQuantity <= 0 || item.sent"
             >
-              Kirim
+              {{ item.sent ? 'Sudah Dikirim' : 'Kirim' }}
             </button>
           </td>
         </tr>
@@ -126,7 +126,9 @@
       </div>
     </div>
     <div class="action-bar">
-      <button @click="sendAllStock" class="send-all-btn">Kirim Semua Stock</button>
+      <button @click="sendAllStock" class="send-all-btn" :disabled="allSent">
+        Kirim Semua Stock
+      </button>
     </div>
     <div v-if="sendStatus" class="send-status">{{ sendStatus }}</div>
   </div>
@@ -184,6 +186,9 @@ export default {
     },
     isTotalWithinStock() {
       return this.totalQuantityToSend > 0 && this.totalQuantityToSend <= this.total_stock
+    },
+    allSent() {
+      return this.data.every((item) => item.sent)
     },
   },
   methods: {
@@ -246,6 +251,8 @@ export default {
         this.sendStatus = 'Stock berhasil dikirim!'
         // Update total_stock after successful send
         this.total_stock -= quantity
+        // Mark as sent
+        item.sent = true
         // Clear the input
         item.sendQuantity = null
         console.log('Send stock response:', response.data)
@@ -282,8 +289,9 @@ export default {
         this.sendStatus = 'Semua stock berhasil dikirim!'
         // Update total_stock after successful send
         this.total_stock -= totalQuantityToSend
-        // Clear all inputs
+        // Mark all as sent
         itemsToSend.forEach((item) => {
+          item.sent = true
           item.sendQuantity = null
         })
         console.log('Send all stock response:', response.data)
@@ -572,6 +580,11 @@ export default {
 }
 
 .send-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.send-all-btn:disabled {
   background: #ccc;
   cursor: not-allowed;
 }
