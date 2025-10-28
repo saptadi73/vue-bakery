@@ -47,13 +47,22 @@
                 {{ item.quantity_provider || 0 }}
               </td>
               <td>
-                <button
-                  v-if="item.quantity !== (item.quantity_provider || 0)"
-                  @click="checkStock(item)"
-                  class="check-btn"
-                >
-                  Please Cek
-                </button>
+                <div class="action-buttons">
+                  <button
+                    v-if="item.quantity !== (item.quantity_provider || 0)"
+                    @click="checkStock(item)"
+                    class="check-btn"
+                  >
+                    Please Cek
+                  </button>
+                  <button
+                    v-if="item.quantity !== (item.quantity_provider || 0)"
+                    @click="createSingleProvider(item)"
+                    class="keep-btn"
+                  >
+                    Keep
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -124,6 +133,7 @@ export default {
 
           // Populate items from order_items
           this.items = this.orderData.order_items.map((item) => ({
+            id: item.id, // Add order_items_id
             product_id: item.product_id,
             outlet_id: item.outlet_id,
             quantity: item.quantity,
@@ -179,6 +189,34 @@ export default {
       this.$router.push(
         `/order/summary/outlet/${item.product_id}/${encodeURIComponent(item.productNameQuery)}`,
       )
+    },
+    async createSingleProvider(item) {
+      this.loadingStore.show()
+      try {
+        const payload = {
+          order_items_id: item.id,
+          quantity: item.quantity,
+          tanggal: new Date().toISOString().split('T')[0], // Current date
+          pic: localStorage.getItem('username'),
+        }
+
+        console.log('Payload Single Provider: ', payload)
+        const response = await api.post(`${BASE_URL}orders/providers/single`, payload)
+        if (response.data.status) {
+          this.message_toast = 'Single provider berhasil dibuat'
+          this.showToast = true
+          // Refresh order details after successful creation
+          await this.fetchOrderDetail()
+        } else {
+          throw new Error('Failed to create single provider')
+        }
+      } catch (error) {
+        console.error('Error creating single provider:', error)
+        this.message_toast = 'Gagal membuat single provider'
+        this.showToast = true
+      } finally {
+        this.loadingStore.hide()
+      }
     },
     async submitEditOrder() {
       this.loadingStore.show()
@@ -322,5 +360,31 @@ textarea.form-control {
 
 .check-btn:hover {
   background: #f57c00;
+}
+
+.keep-btn {
+  background: linear-gradient(135deg, #4caf50, #45a049);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 600;
+  margin-left: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);
+}
+
+.keep-btn:hover {
+  background: linear-gradient(135deg, #45a049, #4caf50);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(76, 175, 80, 0.4);
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 </style>

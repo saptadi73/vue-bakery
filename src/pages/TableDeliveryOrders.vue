@@ -16,6 +16,7 @@
       <thead>
         <tr>
           <th>No. Delivery Order</th>
+          <th>Outlet</th>
           <th>PIC</th>
           <th>Tanggal</th>
           <th>Jumlah Items</th>
@@ -30,6 +31,7 @@
           class="clickable-row"
         >
           <td>{{ order.no_do }}</td>
+          <td>{{ order.delivery_order_items[0]?.outlet_name }}</td>
           <td>{{ order.pic }}</td>
           <td>{{ formatDate(order.tanggal) }}</td>
           <td>{{ order.delivery_order_items.length }}</td>
@@ -47,6 +49,7 @@
       >
         <div class="order-info">
           <div class="order-no">{{ order.no_do }}</div>
+          <div class="order-outlet">Outlet: {{ order.delivery_order_items[0]?.outlet_name }}</div>
           <div class="order-pic">PIC: {{ order.pic }}</div>
           <div class="order-date">{{ formatDate(order.tanggal) }}</div>
           <div class="order-items">Items: {{ order.delivery_order_items.length }}</div>
@@ -87,6 +90,9 @@ export default {
       return this.orders.filter(
         (order) =>
           order.no_do.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+          order.delivery_order_items[0]?.outlet_name
+            .toLowerCase()
+            .includes(this.searchQuery.toLowerCase()) ||
           order.pic.toLowerCase().includes(this.searchQuery.toLowerCase()),
       )
     },
