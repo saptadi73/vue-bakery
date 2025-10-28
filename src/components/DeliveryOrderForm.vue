@@ -67,7 +67,7 @@
       </div>
     </form>
     <ToastCard v-if="showToast" :message="message_toast" @close="showToast = false" />
-    <LoadingOverlay v-if="isLoading" />
+    <LoadingOverlay />
   </div>
 </template>
 
@@ -76,6 +76,7 @@ import axios from 'axios'
 import ToastCard from './ToastCard.vue'
 import LoadingOverlay from './LoadingOverlay.vue'
 import { BASE_URL } from '../base.utils.url.ts'
+import { useLoadingStore } from '@/stores/loading'
 import api from '@/user/axios'
 
 export default {
@@ -96,6 +97,10 @@ export default {
       isLoading: false,
     }
   },
+  setup() {
+    const loadingStore = useLoadingStore()
+    return { loadingStore }
+  },
   mounted() {
     this.orderId = this.$route.params.id
     this.fetchOrderDetail()
@@ -107,7 +112,7 @@ export default {
   },
   methods: {
     async fetchOrderDetail() {
-      this.isLoading = true
+      this.loadingStore.show()
       try {
         const response = await axios.get(`${BASE_URL}orders/${this.orderId}`)
         if (response.data.status) {
@@ -156,7 +161,7 @@ export default {
         this.message_toast = 'Terjadi kesalahan saat mengambil detail order'
         this.showToast = true
       } finally {
-        this.isLoading = false
+        this.loadingStore.hide()
       }
     },
     formatDateTime(dateString) {
@@ -176,7 +181,7 @@ export default {
       )
     },
     async submitEditOrder() {
-      this.isLoading = true
+      this.loadingStore.show()
       try {
         // Collect data from items array
         const orderData = {
@@ -203,7 +208,7 @@ export default {
         this.message_toast = 'Failed to create delivery order. Please try again.'
         this.showToast = true
       } finally {
-        this.isLoading = false
+        this.loadingStore.hide()
       }
     },
   },

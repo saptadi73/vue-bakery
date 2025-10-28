@@ -2,7 +2,10 @@
   <div class="detail-delivery-order-container">
     <div class="top-bar">
       <h2>Detail Delivery Order</h2>
-      <button class="back-btn" @click="$router.go(-1)">← Kembali</button>
+      <div class="top-buttons">
+        <button class="print-btn" @click="printPDF">Print PDF</button>
+        <button class="back-btn" @click="$router.go(-1)">← Kembali</button>
+      </div>
     </div>
 
     <div class="detail-form" v-if="deliveryOrder">
@@ -16,7 +19,7 @@
           </div>
           <div class="form-group">
             <label>PIC Orders</label>
-            <input v-model="deliveryOrder.pic" type="text" readonly class="form-control" />
+            <input v-model="picDelivery" type="text" readonly class="form-control" />
           </div>
           <div class="form-group">
             <label>Tanggal</label>
@@ -31,11 +34,11 @@
         <div class="form-grid">
           <div class="form-group">
             <label>No. Delivery Order</label>
-            <input v-model="deliveryOrder.no_pro" type="text" readonly class="form-control" />
+            <input v-model="deliveryOrder.no_do" type="text" readonly class="form-control" />
           </div>
           <div class="form-group">
             <label>PIC Delivery</label>
-            <input v-model="picDelivery" type="text" readonly class="form-control" />
+            <input v-model="deliveryOrder.pic" type="text" readonly class="form-control" />
           </div>
           <div class="form-group">
             <label>Tanggal Delivery</label>
@@ -53,6 +56,7 @@
               <th>Product Name</th>
               <th>Category Name</th>
               <th>Quantity Delivery</th>
+              <th>Quantity Received</th>
             </tr>
           </thead>
           <tbody>
@@ -60,9 +64,38 @@
               <td>{{ getProductName(item) }}</td>
               <td>{{ getCategoryName(item) }}</td>
               <td>{{ item.quantity }}</td>
+              <td>
+                <input
+                  type="number"
+                  v-model.number="item.quantity_received"
+                  placeholder="0"
+                  class="received-input"
+                  min="0"
+                  :max="item.quantity"
+                />
+              </td>
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- Notes Section -->
+      <div class="form-section">
+        <h3>Keterangan</h3>
+        <div class="form-group">
+          <textarea
+            v-model="notes"
+            placeholder="Masukkan keterangan..."
+            class="notes-textarea"
+            rows="4"
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <button @click="updateReceiver" class="update-btn">Update Receiver</button>
+        <button @click="closeOrder" class="close-btn">Close Order</button>
       </div>
     </div>
 
@@ -76,6 +109,7 @@ import { BASE_URL } from '../base.utils.url.ts'
 import ToastCard from '../components/ToastCard.vue'
 import LoadingOverlay from '../components/LoadingOverlay.vue'
 import api from '@/user/axios.js'
+import jsPDF from 'jspdf'
 
 export default {
   name: 'DetailDeliveryOrder',
@@ -86,6 +120,7 @@ export default {
       showToast: false,
       message_toast: '',
       isLoading: false,
+      notes: '',
     }
   },
   computed: {
@@ -146,6 +181,174 @@ export default {
     getCategoryName(item) {
       return item.provider?.order_item?.product?.category?.nama || 'N/A'
     },
+    updateReceiver() {
+      // TODO: Implement update receiver functionality
+      this.message_toast = 'Update Receiver functionality not implemented yet'
+      this.showToast = true
+    },
+    closeOrder() {
+      // TODO: Implement close order functionality
+      this.message_toast = 'Close Order functionality not implemented yet'
+      this.showToast = true
+    },
+    printPDF() {
+      const doc = new jsPDF()
+      const pageWidth = doc.internal.pageSize.getWidth()
+      const pageHeight = doc.internal.pageSize.getHeight()
+      let yPosition = 30
+
+      // Header with logo placeholder
+      doc.setFillColor(70, 130, 180) // Steel blue
+      doc.rect(0, 0, pageWidth, 25, 'F')
+      doc.setTextColor(255, 255, 255)
+      doc.setFontSize(20)
+      doc.setFont('helvetica', 'bold')
+      doc.text('DELIVERY ORDER', pageWidth / 2, 15, { align: 'center' })
+      doc.setFontSize(12)
+      doc.setFont('helvetica', 'normal')
+      const outletName =
+        this.deliveryOrder?.delivery_order_items?.[0]?.provider?.order_item?.order?.outlet_name ||
+        'N/A'
+      doc.text(`To: ${outletName}`, pageWidth / 2, 22, { align: 'center' })
+
+      // Company info placeholder
+      doc.setTextColor(0, 0, 0)
+      doc.setFontSize(8)
+      doc.setFont('helvetica', 'normal')
+      doc.text('PT. Bakery Indonesia', 20, 35)
+      doc.text('Jl. Raya Bakery No. 123, Jakarta', 20, 40)
+      doc.text('Tel: (021) 12345678 | Email: info@bakery.co.id', 20, 45)
+      yPosition = 55
+
+      // Order Details Box
+      doc.setDrawColor(70, 130, 180)
+      doc.setLineWidth(0.5)
+      doc.roundedRect(15, yPosition, pageWidth - 30, 40, 3, 3, 'S')
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'bold')
+      doc.text('ORDER INFORMATION', 20, yPosition + 8)
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(9)
+      doc.text(`Order No: ${this.orderNo}`, 25, yPosition + 16)
+      doc.text(`PIC Orders: ${this.picDelivery}`, 25, yPosition + 23)
+      doc.text(`Date: ${this.formattedDate}`, 25, yPosition + 30)
+      doc.text(`Delivery Order No: ${this.deliveryOrder.no_do}`, 120, yPosition + 16)
+      doc.text(`PIC Delivery: ${this.deliveryOrder.pic}`, 120, yPosition + 23)
+      doc.text(`Delivery Date: ${this.formattedDeliveryDate}`, 120, yPosition + 30)
+      yPosition += 55
+
+      // Items Table
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'bold')
+      doc.text('DELIVERED ITEMS', 20, yPosition)
+      yPosition += 10
+
+      // Table Header
+      doc.setFillColor(240, 248, 255) // Alice blue
+      doc.rect(15, yPosition - 5, pageWidth - 30, 10, 'F')
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'bold')
+      doc.text('No', 20, yPosition)
+      doc.text('Product Name', 35, yPosition)
+      doc.text('Category', 120, yPosition)
+      doc.text('Quantity', 170, yPosition)
+      yPosition += 10
+
+      // Table Rows
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(9)
+      this.deliveryOrder.delivery_order_items.forEach((item, index) => {
+        if (yPosition > pageHeight - 50) {
+          doc.addPage()
+          yPosition = 30
+        }
+        doc.text(`${index + 1}`, 20, yPosition)
+        doc.text(this.getProductName(item), 35, yPosition)
+        doc.text(this.getCategoryName(item), 120, yPosition)
+        doc.text(item.quantity.toString(), 170, yPosition)
+        yPosition += 7
+      })
+      yPosition += 5
+
+      // Signature Section
+      if (yPosition > pageHeight - 60) {
+        doc.addPage()
+        yPosition = 5
+      }
+
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'bold')
+      doc.text('KETERANGAN/NOTES', 20, yPosition)
+      yPosition += 2
+
+      // Signature note box
+      doc.setDrawColor(70, 130, 180)
+      doc.setLineWidth(0.5)
+      doc.roundedRect(15, yPosition, pageWidth - 30, 8, 2, 2, 'S')
+      doc.setFontSize(8)
+      doc.setFont('helvetica', 'italic')
+
+      yPosition += 15
+
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'bold')
+      doc.text('SIGNATURES', 20, yPosition)
+      yPosition += 5
+
+      // Signature boxes with labels
+      const boxWidth = 40
+      const boxHeight = 20
+      const boxY = yPosition
+
+      // PIC Order
+      doc.setDrawColor(70, 130, 180)
+      doc.setLineWidth(0.8)
+      doc.rect(20, boxY, boxWidth, boxHeight)
+      doc.setFontSize(7)
+      doc.setFont('helvetica', 'bold')
+      doc.text(this.picDelivery || 'PIC Order', 20, boxY - 2)
+      doc.setFont('helvetica', 'italic')
+      doc.setFontSize(6)
+      doc.text('(Order Creator)', 20, boxY + boxHeight + 3)
+
+      // PIC Delivery
+      doc.rect(75, boxY, boxWidth, boxHeight)
+      doc.setFontSize(7)
+      doc.setFont('helvetica', 'bold')
+      doc.text(this.deliveryOrder.pic || 'PIC Delivery', 75, boxY - 2)
+      doc.setFont('helvetica', 'italic')
+      doc.setFontSize(6)
+      doc.text('(Delivery Person)', 75, boxY + boxHeight + 3)
+
+      // Penerima
+      doc.rect(130, boxY, boxWidth, boxHeight)
+      doc.setFontSize(7)
+      doc.setFont('helvetica', 'bold')
+      doc.text('PENERIMA', 130, boxY - 2)
+      doc.setFont('helvetica', 'italic')
+      doc.setFontSize(6)
+      doc.text('(Receiver)', 130, boxY + boxHeight + 3)
+
+      // Footer
+      doc.setFontSize(8)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(128, 128, 128)
+      doc.text(
+        'This document is generated electronically and is valid without signature.',
+        pageWidth / 2,
+        pageHeight - 20,
+        { align: 'center' },
+      )
+      doc.text(
+        `Generated on: ${new Date().toLocaleDateString('id-ID')}`,
+        pageWidth / 2,
+        pageHeight - 10,
+        { align: 'center' },
+      )
+
+      // Save the PDF
+      doc.save(`Delivery_Order_${this.deliveryOrder.no_do || 'Detail'}.pdf`)
+    },
   },
 }
 </script>
@@ -162,6 +365,11 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+}
+
+.top-buttons {
+  display: flex;
+  gap: 10px;
 }
 
 .top-bar h2 {
@@ -182,6 +390,21 @@ export default {
 
 .back-btn:hover {
   background: #1976d2;
+}
+
+.print-btn {
+  background: #28a745;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.print-btn:hover {
+  background: #218838;
 }
 
 .detail-form {
@@ -250,6 +473,73 @@ export default {
 
 .items-table tbody tr:hover {
   background: #f5f5f5;
+}
+
+.received-input {
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  width: 80px;
+  font-size: 0.9em;
+  text-align: center;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #e9ecef;
+}
+
+.update-btn {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 24px;
+  font-size: 1em;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.update-btn:hover {
+  background: #0056b3;
+}
+
+.close-btn {
+  background: #dc3545;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 24px;
+  font-size: 1em;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.close-btn:hover {
+  background: #c82333;
+}
+
+.notes-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.notes-textarea:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
 @media (max-width: 768px) {

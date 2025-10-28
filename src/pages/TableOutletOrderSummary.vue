@@ -1,5 +1,6 @@
 <template>
   <div class="outlet-order-summary-table-container">
+    <button @click="goBack" class="back-btn">Kembali</button>
     <h2>Breakdown Order per Outlet</h2>
     <div v-if="productName" class="product-title">
       Produk: <b>{{ productName }}</b>
@@ -306,6 +307,9 @@ export default {
       // This method is called on input change to ensure reactivity of computed properties
       // The computed properties totalQuantityToSend and isTotalExceedingStock will automatically update
     },
+    goBack() {
+      this.$router.push('/produk/summary')
+    },
     handleResize() {
       this.isMobile = window.innerWidth <= 600
     },
@@ -587,5 +591,22 @@ export default {
 .send-all-btn:disabled {
   background: #ccc;
   cursor: not-allowed;
+}
+
+.back-btn {
+  background: #6c757d;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 1em;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+  margin-bottom: 16px;
+}
+
+.back-btn:hover {
+  background: #5a6268;
 }
 </style>

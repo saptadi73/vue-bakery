@@ -29,7 +29,7 @@
           @click="viewDetail(order.id)"
           class="clickable-row"
         >
-          <td>{{ order.no_pro }}</td>
+          <td>{{ order.no_do }}</td>
           <td>{{ order.pic }}</td>
           <td>{{ formatDate(order.tanggal) }}</td>
           <td>{{ order.delivery_order_items.length }}</td>
@@ -46,7 +46,7 @@
         @click="viewDetail(order.id)"
       >
         <div class="order-info">
-          <div class="order-no">{{ order.no_pro }}</div>
+          <div class="order-no">{{ order.no_do }}</div>
           <div class="order-pic">PIC: {{ order.pic }}</div>
           <div class="order-date">{{ formatDate(order.tanggal) }}</div>
           <div class="order-items">Items: {{ order.delivery_order_items.length }}</div>
@@ -86,7 +86,7 @@ export default {
       if (!this.searchQuery) return this.orders
       return this.orders.filter(
         (order) =>
-          order.no_pro.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+          order.no_do.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
           order.pic.toLowerCase().includes(this.searchQuery.toLowerCase()),
       )
     },

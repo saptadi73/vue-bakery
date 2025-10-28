@@ -115,7 +115,6 @@ export default {
     return {
       data: [],
       BASE_URL,
-      loadingStore: useLoadingStore(),
       searchQuery: '',
       currentPage: 1,
       pageSize: 5,
@@ -123,6 +122,10 @@ export default {
       showModal: false,
       modalImageUrl: '',
     }
+  },
+  setup() {
+    const loadingStore = useLoadingStore()
+    return { loadingStore }
   },
   computed: {
     filteredData() {
