@@ -27,8 +27,12 @@
         <tr
           v-for="order in filteredOrders"
           :key="order.id"
-          @click="viewDetail(order.id)"
+          @click="order.status === 'closed' ? null : viewDetail(order.id)"
           class="clickable-row"
+          :class="{
+            'completed-row': order.status === 'closed',
+            'clickable-row': order.status !== 'closed',
+          }"
         >
           <td>{{ order.no_do }}</td>
           <td>{{ order.delivery_order_items[0]?.outlet_name }}</td>
@@ -45,7 +49,11 @@
         v-for="order in filteredOrders"
         :key="order.id"
         class="delivery-orders-card"
-        @click="viewDetail(order.id)"
+        @click="order.status === 'closed' ? null : viewDetail(order.id)"
+        :class="{
+          'completed-card': order.status === 'closed',
+          'delivery-orders-card': order.status !== 'closed',
+        }"
       >
         <div class="order-info">
           <div class="order-no">{{ order.no_do }}</div>
@@ -56,6 +64,7 @@
           <div class="order-total">
             Total Qty: {{ getTotalQuantity(order.delivery_order_items) }}
           </div>
+          <div v-if="order.status === 'closed'" class="status-badge">Selesai</div>
         </div>
       </div>
     </div>
@@ -207,6 +216,37 @@ export default {
   background: #f5f5f5;
 }
 
+.completed-row {
+  background-color: #e8f5e8;
+  cursor: default;
+}
+
+.completed-row:hover {
+  background: #e8f5e8;
+}
+
+.completed-card {
+  background-color: #e8f5e8;
+  border-left: 4px solid #28a745;
+}
+
+.completed-card:hover {
+  background: #e8f5e8;
+  transform: none;
+}
+
+.status-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #28a745;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8em;
+  font-weight: bold;
+}
+
 /* Mobile styles */
 .delivery-orders-card-list {
   display: flex;
@@ -223,6 +263,7 @@ export default {
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
+  position: relative;
 }
 
 .delivery-orders-card:hover {

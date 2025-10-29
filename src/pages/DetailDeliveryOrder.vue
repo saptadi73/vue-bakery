@@ -44,6 +44,12 @@
             <label>Tanggal Delivery</label>
             <input v-model="formattedDeliveryDate" type="text" readonly class="form-control" />
           </div>
+          <div class="form-group">
+            <label>Status</label>
+            <span :class="getStatusClass(status)" class="status-badge">{{
+              getStatusText(status)
+            }}</span>
+          </div>
         </div>
       </div>
 
@@ -94,13 +100,17 @@
 
       <!-- Action Buttons -->
       <div class="action-buttons">
-        <button @click="updateReceiver" class="update-btn">Update Receiver</button>
-        <button @click="closeOrder" class="close-btn">Close Order</button>
+        <button @click="updateReceiver" class="update-btn" :disabled="status === 'closed'">
+          {{ existingReceive ? 'Update Receiver' : 'Create Receiver' }}
+        </button>
+        <button @click="closeOrder" class="close-btn" :disabled="status === 'closed'">
+          Close Order
+        </button>
       </div>
     </div>
 
     <ToastCard v-if="showToast" :message="message_toast" @close="showToast = false" />
-    <LoadingOverlay v-if="isLoading" />
+    <LoadingOverlay />
   </div>
 </template>
 
@@ -109,6 +119,7 @@ import { BASE_URL } from '../base.utils.url.ts'
 import ToastCard from '../components/ToastCard.vue'
 import LoadingOverlay from '../components/LoadingOverlay.vue'
 import api from '@/user/axios.js'
+import { useLoadingStore } from '@/stores/loading.js'
 import jsPDF from 'jspdf'
 
 export default {
@@ -121,6 +132,8 @@ export default {
       message_toast: '',
       isLoading: false,
       notes: '',
+      status: 'open', // Default status
+      existingReceive: null, // Store existing receive data if any
     }
   },
   computed: {
@@ -145,14 +158,44 @@ export default {
   mounted() {
     this.fetchDeliveryOrderDetail()
   },
+  setup() {
+    const loadingStore = useLoadingStore()
+    return { loadingStore }
+  },
   methods: {
     async fetchDeliveryOrderDetail() {
-      this.isLoading = true
+      this.loadingStore.show()
       try {
         const orderId = this.$route.params.id
         const response = await api.get(`${BASE_URL}delivery-orders/${orderId}`)
         if (response.data.status) {
           this.deliveryOrder = response.data.data
+          this.status = this.deliveryOrder.status || 'open'
+
+          // Check if receives exist and set existingReceive
+          if (this.deliveryOrder.receives && this.deliveryOrder.receives.length > 0) {
+            this.existingReceive = this.deliveryOrder.receives[0] // Take the first receive
+            this.notes = this.existingReceive.keterangan || ''
+
+            // Pre-populate quantity_received from existing receive items
+            this.deliveryOrder.delivery_order_items.forEach((item) => {
+              const receiveItem = this.existingReceive.receive_items.find(
+                (ri) => ri.delivery_order_items_id === item.id,
+              )
+              if (receiveItem) {
+                item.quantity_received = receiveItem.quantity
+              } else if (item.quantity_received === undefined || item.quantity_received === null) {
+                item.quantity_received = item.quantity
+              }
+            })
+          } else {
+            // No existing receives, set defaults
+            this.deliveryOrder.delivery_order_items.forEach((item) => {
+              if (item.quantity_received === undefined || item.quantity_received === null) {
+                item.quantity_received = item.quantity
+              }
+            })
+          }
         } else {
           this.message_toast = 'Gagal mengambil detail delivery order'
           this.showToast = true
@@ -162,7 +205,7 @@ export default {
         this.message_toast = 'Terjadi kesalahan saat mengambil detail delivery order'
         this.showToast = true
       } finally {
-        this.isLoading = false
+        this.loadingStore.hide()
       }
     },
     formatDate(dateString) {
@@ -181,15 +224,121 @@ export default {
     getCategoryName(item) {
       return item.provider?.order_item?.product?.category?.nama || 'N/A'
     },
-    updateReceiver() {
-      // TODO: Implement update receiver functionality
-      this.message_toast = 'Update Receiver functionality not implemented yet'
-      this.showToast = true
+    getStatusClass(status) {
+      switch (status) {
+        case 'closed':
+          return 'status-closed'
+        case 'open':
+          return 'status-open'
+        default:
+          return 'status-open'
+      }
     },
-    closeOrder() {
-      // TODO: Implement close order functionality
-      this.message_toast = 'Close Order functionality not implemented yet'
-      this.showToast = true
+    getStatusText(status) {
+      switch (status) {
+        case 'closed':
+          return 'Closed'
+        case 'open':
+          return 'Open'
+        default:
+          return 'Open'
+      }
+    },
+    async updateReceiver() {
+      this.loadingStore.show()
+      try {
+        const picName = localStorage.getItem('username')
+        const currentDate = new Date().toISOString().split('T')[0]
+
+        if (this.existingReceive) {
+          // Update existing receive
+          const payload = {
+            pic: picName,
+            tanggal: currentDate,
+            keterangan: this.notes,
+            items: this.deliveryOrder.delivery_order_items.map((item) => ({
+              delivery_order_items_id: item.id,
+              quantity: item.quantity_received || 0,
+              pic: picName,
+              tanggal: currentDate,
+            })),
+          }
+
+          const response = await api.put(`${BASE_URL}receives/${this.existingReceive.id}`, payload)
+          console.log('Update payload Receive:', payload)
+          if (response.data.status) {
+            this.message_toast = 'Receiver updated successfully'
+            this.showToast = true
+            // Refresh data after update
+            await this.fetchDeliveryOrderDetail()
+          } else {
+            this.message_toast = 'Failed to update receiver'
+            this.showToast = true
+          }
+        } else {
+          // Create new receive
+          const payload = {
+            delivery_order_id: this.deliveryOrder.id,
+            pic: picName,
+            tanggal: currentDate,
+            keterangan: this.notes,
+            items: this.deliveryOrder.delivery_order_items.map((item) => ({
+              delivery_order_items_id: item.id,
+              quantity: item.quantity_received || 0,
+              pic: picName,
+              tanggal: currentDate,
+            })),
+          }
+
+          const response = await api.post(`${BASE_URL}receives/new`, payload)
+          console.log('Create payload Receive:', payload)
+          if (response.data.status) {
+            this.message_toast = 'Receiver created successfully'
+            this.showToast = true
+            // Refresh data after creation
+            await this.fetchDeliveryOrderDetail()
+          } else {
+            this.message_toast = 'Failed to create receiver'
+            this.showToast = true
+          }
+        }
+      } catch (error) {
+        console.error('Error with receiver:', error)
+        this.message_toast = `Error ${this.existingReceive ? 'updating' : 'creating'} receiver`
+        this.showToast = true
+      } finally {
+        this.loadingStore.hide()
+      }
+    },
+    async closeOrder() {
+      this.loadingStore.show()
+      try {
+        const response = await api.post(
+          `${BASE_URL}delivery-orders/${this.deliveryOrder.id}/close`,
+          {
+            pic: localStorage.getItem('username'),
+          },
+        )
+
+        if (response.data.status) {
+          this.status = 'closed'
+          this.message_toast = 'Order closed successfully'
+          this.showToast = true
+          // Navigate back after success
+          setTimeout(() => {
+            this.$router.push('/delivery/orders')
+          }, 2000)
+        } else {
+          this.message_toast = 'Failed to close order'
+          this.showToast = true
+        }
+      } catch (error) {
+        console.error('Error closing order:', error)
+        this.message_toast = 'Error closing order'
+        this.showToast = true
+      } finally {
+        this.loadingStore.hide()
+      }
     },
     printPDF() {
       const doc = new jsPDF()
@@ -505,7 +654,7 @@ export default {
   transition: background 0.2s;
 }
 
-.update-btn:hover {
+.update-btn:hover:not(:disabled) {
   background: #0056b3;
 }
 
@@ -521,8 +670,18 @@ export default {
   transition: background 0.2s;
 }
 
-.close-btn:hover {
+.close-btn:hover:not(:disabled) {
   background: #c82333;
+}
+
+.close-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.update-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
 }
 
 .notes-textarea {
@@ -540,6 +699,16 @@ export default {
   outline: none;
   border-color: #007bff;
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.status-open {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-closed {
+  background: #f8d7da;
+  color: #721c24;
 }
 
 @media (max-width: 768px) {

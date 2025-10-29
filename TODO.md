@@ -1,34 +1,17 @@
-# TODO: Improve TableOrderListForHQ.vue
+# TODO List
 
-## Completed Tasks
+## Current Tasks
 
-- [x] Analyze current table structure and features
-- [x] Create improvement plan with user approval
-- [x] Add pagination state and controls
-- [x] Implement sorting functionality for columns
-- [x] Add status filter dropdown
-- [x] Add date range filters (from/to)
-- [x] Add export to CSV functionality
-- [x] Improve styling with modern colors and hover effects
-- [x] Add refresh button
-- [x] Add total orders count display
-- [x] Improve empty state message
-- [x] Ensure responsive design works with new features
-- [x] Convert FontAwesome icons to Vue components
-- [x] Test all new functionalities
-
-## Summary
-
-All improvements have been successfully implemented:
-
-- Pagination with customizable items per page
-- Column sorting with visual indicators
-- Advanced filtering (search, status, date range)
-- CSV export functionality
-- Modern UI with improved styling
-- Responsive design maintained
-- Empty state handling
-- Refresh functionality
-- Fixed table header layout issues (removed complex flex layout)
-- Status options: new, delivered, completed
-- Action buttons (edit/delivery) only visible for 'new' status orders
+- [x] Implement close order functionality in DetailDeliveryOrder.vue
+  - [x] Add status property to track order state
+  - [x] Implement closeOrder method with API call to update status to 'closed'
+  - [x] Update TableDeliveryOrders.vue to use status instead of receives_id for editability
+  - [x] Update UI to show status and disable buttons if closed
+  - [x] Test the flow: Create receive → Close order → Verify in list view
+- [x] Enable direct updates to receives in DetailDeliveryOrder.vue
+  - [x] Add existingReceive data property to track existing receives
+  - [x] Modify fetchDeliveryOrderDetail to detect and pre-populate existing receive data
+  - [x] Update button text to show "Create Receiver" or "Update Receiver" based on existing data
+  - [x] Modify updateReceiver method to use PUT for updates and POST for new receives
+  - [x] Refresh data after successful operations
+- [x] Update close order endpoint to use POST /delivery-orders/{id}/close

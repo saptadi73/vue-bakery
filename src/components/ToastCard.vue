@@ -2,7 +2,7 @@
   <transition name="fade">
     <div
       v-if="message_toast"
-      class="fixed left-1/2 top-24 transform -translate-x-1/2 z-50 max-w-xs w-full font-Poppins bg-gradient-to-r from-green-400 via-green-500 to-teal-400 text-white rounded-xl shadow-2xl shadow-green-300/40 border border-green-600 animate-pop p-5"
+      class="fixed left-1/2 top-24 transform -translate-x-1/2 z-60 max-w-xs w-full font-Poppins bg-gradient-to-r from-green-400 via-green-500 to-teal-400 text-white rounded-xl shadow-2xl shadow-green-300/40 border border-green-600 animate-pop p-5"
     >
       <div class="flex items-center gap-3">
         <span class="inline-block bg-white/20 p-2 rounded-full">

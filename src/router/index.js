@@ -66,6 +66,16 @@ const router = createRouter({
           component: () => import('../pages/DetailDeliveryOrder.vue'),
         },
         {
+          path: 'receives',
+          name: 'receives',
+          component: () => import('../pages/TableReceives.vue'),
+        },
+        {
+          path: 'receives/:id',
+          name: 'detail receive',
+          component: () => import('../pages/DetailReceive.vue'),
+        },
+        {
           path: 'group',
           name: 'delivery group',
           component: () => import('../pages/TableOutletDistribusiProduk.vue'),
@@ -120,6 +130,11 @@ const router = createRouter({
           path: 'summary',
           name: 'Product Summary',
           component: () => import('../pages/TableProductSummary.vue'),
+        },
+        {
+          path: 'summary/roti',
+          name: 'product summary roti',
+          component: () => import('../pages/TableProductSummaryRoti.vue'),
         },
       ],
     },
