@@ -61,6 +61,11 @@ const router = createRouter({
           component: () => import('../pages/TableDeliveryOrders.vue'),
         },
         {
+          path: 'orders/outlet',
+          name: 'delivery orders by outlet',
+          component: () => import('../pages/TableDeliveryOrdersByOutlet.vue'),
+        },
+        {
           path: 'orders/:id',
           name: 'detail delivery order',
           component: () => import('../pages/DetailDeliveryOrder.vue'),
@@ -101,6 +106,11 @@ const router = createRouter({
           path: 'dashboard',
           name: 'dashboard',
           component: () => import('../pages/DashboardBakery.vue'),
+        },
+        {
+          path: 'reports/orders',
+          name: 'order report',
+          component: () => import('../pages/DashboardOrderReport.vue'),
         },
       ],
     },
@@ -173,6 +183,48 @@ const router = createRouter({
       ],
     },
   ],
+})
+
+// Navigation guard for role-based access control
+router.beforeEach((to, from, next) => {
+  const roleId = localStorage.getItem('role_id')
+  console.log('Current role_id:', roleId, 'Navigating to:', to.path)
+
+  const allowedPathsForEmployee = [
+    '/produk/list',
+    '/outlet/list',
+    '/order/list',
+    '/order/create',
+    '/delivery/orders/outlet',
+    '/delivery/orders',
+    '/main/dashboard',
+    '/login',
+    '/', // home/login page
+  ]
+
+  // If role_id is 2 or 3 (employee), restrict access
+  if (roleId === '2' || roleId === '3') {
+    console.log('Employee role detected, checking access...')
+    const isAllowed = allowedPathsForEmployee.some((allowedPath) => {
+      // Check exact match or if the path starts with allowed path
+      const allowed = to.path === allowedPath || to.path.startsWith(allowedPath + '/')
+      console.log(`Checking ${to.path} against ${allowedPath}: ${allowed}`)
+      return allowed
+    })
+
+    console.log('Is allowed:', isAllowed)
+
+    if (!isAllowed) {
+      console.log('Access denied, redirecting to login')
+      // Redirect to login if trying to access restricted page
+      next('/login')
+      return
+    }
+  }
+
+  // Allow access for other roles or allowed paths
+  console.log('Access allowed')
+  next()
 })
 
 export default router

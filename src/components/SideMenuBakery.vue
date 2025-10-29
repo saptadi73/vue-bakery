@@ -1,6 +1,6 @@
 <template>
   <ul class="space-y-1">
-    <li v-for="(item, index) in navItems" :key="item">
+    <li v-for="(item, index) in filteredNavItems" :key="item">
       <div @click="!item.title && haddleSubMenu(index)">
         <span
           v-if="item.title === true"
@@ -31,11 +31,52 @@
 <script setup>
 import SideMenuParentItem from '../components/SideMenuParentItem.vue'
 import SideMenuSubItem from '../components/SideMenuSubItem.vue'
-import { reactive, inject } from 'vue'
+import { reactive, inject, computed } from 'vue'
 const $emitter = inject('$emitter')
 
 import { useScreenSize } from '@/composables/useScreenSize.js'
 const { isMobile } = useScreenSize()
+
+// Get role_id from localStorage
+const roleId = computed(() => localStorage.getItem('role_id'))
+
+// Allowed menu items for employee roles (role_id = 2 and 3)
+const allowedMenuItems = ['Produk', 'Outlet', 'Order', 'Delivery', 'Users']
+
+// Filter navItems based on role
+const filteredNavItems = computed(() => {
+  if (roleId.value === '2' || roleId.value === '3') {
+    return navItems
+      .filter((item) => allowedMenuItems.includes(item.text))
+      .map((item) => {
+        if (item.children) {
+          return {
+            ...item,
+            children: item.children.filter((child) => {
+              if (item.text === 'Order') {
+                return ['/order/list', '/order/create'].includes(child.url)
+              }
+              if (item.text === 'Delivery') {
+                return child.url === '/delivery/orders/outlet'
+              }
+              if (item.text === 'Produk') {
+                return child.url === '/produk/list'
+              }
+              if (item.text === 'Outlet') {
+                return child.url === '/outlet/list'
+              }
+              if (item.text === 'Users') {
+                return child.url === '/login'
+              }
+              return true
+            }),
+          }
+        }
+        return item
+      })
+  }
+  return navItems
+})
 
 const navItems = reactive([
   {
@@ -43,12 +84,18 @@ const navItems = reactive([
     url: '/main/dashboard',
     icon: 'fa-solid fa-house',
     open: false,
-    badge: {
-      text: 'New',
-      style: 'bg-red-900 text-white',
-    },
     title: false,
-    haschildren: false,
+    haschildren: true,
+    children: [
+      {
+        text: 'Main Dashboard',
+        url: '/main/dashboard',
+      },
+      {
+        text: 'Order Report',
+        url: '/main/reports/orders',
+      },
+    ],
   },
   {
     text: 'Produk',
@@ -98,10 +145,6 @@ const navItems = reactive([
         text: 'Create Order',
         url: '/order/create',
       },
-      {
-        text: 'Order Summary Per Produk',
-        url: '/order/summary',
-      },
     ],
   },
   {
@@ -113,20 +156,16 @@ const navItems = reactive([
     title: false,
     children: [
       {
-        text: 'Create Stock',
-        url: '/kitchen/stock',
-        // badge: {
-        //   text: 20,
-        //   style: '',
-        // },
-      },
-      {
-        text: 'adjustment',
+        text: 'Stock Adjustment',
         url: '/kitchen/adjustment',
       },
       {
-        text: 'summary',
+        text: 'Summary Produk dan Isi Stock',
         url: '/produk/summary',
+      },
+      {
+        text: 'Summary Order Roti',
+        url: '/produk/summary/roti',
       },
     ],
   },
@@ -144,8 +183,8 @@ const navItems = reactive([
         url: '/delivery/orders',
       },
       {
-        text: 'Distribusi Produk',
-        url: '/delivery/group',
+        text: 'Delivery Orders Outlet',
+        url: '/delivery/orders/outlet',
       },
     ],
   },
@@ -190,7 +229,7 @@ const haddleSubMenu = (index) => {
     }
   }
 
-  navItems.forEach((item, i) => {
+  filteredNavItems.value.forEach((item, i) => {
     if (i === index) {
       item.open = !item.open
     } else {

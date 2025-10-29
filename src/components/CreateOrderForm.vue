@@ -146,28 +146,36 @@ export default {
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
+
+/* Responsive form grid */
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
   margin-bottom: 20px;
 }
+
 .full-width {
   grid-column: span 2;
 }
+
 .form-group {
   margin-bottom: 16px;
 }
+
 .form-control {
   width: 100%;
   padding: 8px 12px;
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 14px;
+  box-sizing: border-box;
 }
+
 .items-section {
   margin-bottom: 20px;
 }
+
 .add-item-btn {
   background: #4caf50;
   color: #fff;
@@ -176,13 +184,18 @@ export default {
   padding: 8px 16px;
   cursor: pointer;
   margin-top: 10px;
+  width: 100%;
+  font-size: 16px;
 }
+
 .add-item-btn:hover {
   background: #45a049;
 }
+
 .form-actions {
   text-align: center;
 }
+
 .submit-btn {
   background: #2196f3;
   color: #fff;
@@ -191,8 +204,63 @@ export default {
   padding: 10px 20px;
   cursor: pointer;
   font-size: 16px;
+  width: 100%;
 }
+
 .submit-btn:hover {
   background: #1976d2;
+}
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  .create-order-form {
+    padding: 16px;
+    margin: 0 10px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .full-width {
+    grid-column: span 1;
+  }
+
+  .form-control {
+    font-size: 16px; /* Prevent zoom on iOS */
+    padding: 10px 12px;
+  }
+
+  .add-item-btn,
+  .submit-btn {
+    padding: 12px 16px;
+    font-size: 16px;
+  }
+
+  .items-section h3 {
+    font-size: 1.2em;
+  }
+}
+
+@media (max-width: 480px) {
+  .create-order-form {
+    padding: 12px;
+    margin: 0 5px;
+  }
+
+  .form-group {
+    margin-bottom: 12px;
+  }
+
+  .form-control {
+    padding: 12px;
+  }
+
+  .add-item-btn,
+  .submit-btn {
+    padding: 14px 16px;
+    font-size: 16px;
+  }
 }
 </style>

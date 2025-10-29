@@ -31,8 +31,20 @@
             </span>
           </td>
           <td>
-            <button class="edit-btn" @click="editOrder(order)">Edit</button>
-            <button class="delete-btn" @click="confirmDelete(order)">Delete</button>
+            <button
+              v-if="order.status_order !== 'delivered' && order.status_order !== 'completed'"
+              class="edit-btn"
+              @click="editOrder(order)"
+            >
+              Edit
+            </button>
+            <button
+              v-if="order.status_order !== 'delivered' && order.status_order !== 'completed'"
+              class="delete-btn"
+              @click="confirmDelete(order)"
+            >
+              Delete
+            </button>
           </td>
         </tr>
       </tbody>
@@ -52,8 +64,20 @@
           </div>
         </div>
         <div class="order-actions">
-          <button class="edit-btn" @click="editOrder(order)">Edit</button>
-          <button class="delete-btn" @click="confirmDelete(order)">Delete</button>
+          <button
+            v-if="order.status_order !== 'delivered' && order.status_order !== 'completed'"
+            class="edit-btn"
+            @click="editOrder(order)"
+          >
+            Edit
+          </button>
+          <button
+            v-if="order.status_order !== 'delivered' && order.status_order !== 'completed'"
+            class="delete-btn"
+            @click="confirmDelete(order)"
+          >
+            Delete
+          </button>
         </div>
       </div>
     </div>

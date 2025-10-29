@@ -114,7 +114,12 @@ async function login() {
 
 function tutupToast() {
   showToast.value = false
-  router.push('/main/dashboard')
+  const roleId = localStorage.getItem('role_id')
+  if (roleId === '2' || roleId === '3') {
+    router.push('/produk/list')
+  } else {
+    router.push('/main/dashboard')
+  }
 }
 </script>
 

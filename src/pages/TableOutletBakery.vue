@@ -1,7 +1,9 @@
 <template>
   <div class="product-table-container">
     <div class="top-bar">
-      <button class="add-btn" @click="showModal = true">+ Add Outlet</button>
+      <button v-if="roleId !== '2' && roleId !== '3'" class="add-btn" @click="showModal = true">
+        + Add Outlet
+      </button>
     </div>
     <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
       <div class="modal-content">
@@ -80,10 +82,20 @@
           <td>{{ product.kode }}</td>
 
           <td class="aksi-cell">
-            <button class="icon-btn" @click="editProduct(product)" title="Edit">
+            <button
+              v-if="roleId !== '2' && roleId !== '3'"
+              class="icon-btn"
+              @click="editProduct(product)"
+              title="Edit"
+            >
               <span class="icon-edit" aria-label="Edit">✏️</span>
             </button>
-            <button class="icon-btn" @click="deleteProduct(product)" title="Delete">
+            <button
+              v-if="roleId !== '2' && roleId !== '3'"
+              class="icon-btn"
+              @click="deleteProduct(product)"
+              title="Delete"
+            >
               <span class="icon-delete" aria-label="Delete">🗑️</span>
             </button>
           </td>
@@ -111,10 +123,20 @@
           <div class="product-code">Alamat: {{ product.alamat }}</div>
           <div class="product-code">Telp: {{ product.phone }}</div>
           <div class="product-order">
-            <button class="icon-btn" @click="editProduct(product)" title="Edit">
+            <button
+              v-if="roleId !== '2' && roleId !== '3'"
+              class="icon-btn"
+              @click="editProduct(product)"
+              title="Edit"
+            >
               <span class="icon-edit" aria-label="Edit">✏️</span>
             </button>
-            <button class="icon-btn" @click="deleteProduct(product)" title="Delete">
+            <button
+              v-if="roleId !== '2' && roleId !== '3'"
+              class="icon-btn"
+              @click="deleteProduct(product)"
+              title="Delete"
+            >
               <span class="icon-delete" aria-label="Delete">🗑️</span>
             </button>
           </div>
@@ -210,6 +232,7 @@ export default {
       deleteOutletName: '',
       toastMessage: '',
       showToast: false,
+      roleId: localStorage.getItem('role_id'),
     }
   },
   setup() {

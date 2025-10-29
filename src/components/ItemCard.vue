@@ -156,27 +156,38 @@ export default {
   display: flex;
   gap: 16px;
   align-items: flex-start;
+  flex-wrap: wrap;
 }
+
 .product-group {
   flex: 1;
+  min-width: 200px;
 }
+
 .category-group {
   flex: 1;
+  min-width: 200px;
 }
+
 .quantity-group {
   flex: 0 0 120px;
+  min-width: 120px;
 }
+
 .form-group {
   margin-bottom: 12px;
   position: relative;
 }
+
 .form-control {
   width: 100%;
   padding: 8px 12px;
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 14px;
+  box-sizing: border-box;
 }
+
 .suggestions-list {
   position: absolute;
   top: 100%;
@@ -193,14 +204,17 @@ export default {
   padding: 0;
   margin: 0;
 }
+
 .suggestion-item {
   padding: 8px 12px;
   cursor: pointer;
   border-bottom: 1px solid #eee;
 }
+
 .suggestion-item:hover {
   background: #f5f5f5;
 }
+
 .remove-item-btn {
   background: #f44336;
   color: #fff;
@@ -209,8 +223,64 @@ export default {
   padding: 8px 16px;
   cursor: pointer;
   margin-top: 10px;
+  width: 100%;
+  font-size: 16px;
 }
+
 .remove-item-btn:hover {
   background: #d32f2f;
+}
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  .item-card {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .product-group,
+  .category-group {
+    min-width: unset;
+    flex: 1;
+  }
+
+  .quantity-group {
+    flex: 0 0 100%;
+    min-width: unset;
+  }
+
+  .form-control {
+    font-size: 16px; /* Prevent zoom on iOS */
+    padding: 10px 12px;
+  }
+
+  .remove-item-btn {
+    padding: 12px 16px;
+    font-size: 16px;
+  }
+
+  .suggestions-list {
+    max-height: 150px;
+  }
+}
+
+@media (max-width: 480px) {
+  .item-card {
+    padding: 10px;
+    margin-bottom: 12px;
+  }
+
+  .form-group {
+    margin-bottom: 10px;
+  }
+
+  .form-control {
+    padding: 12px;
+  }
+
+  .remove-item-btn {
+    padding: 14px 16px;
+  }
 }
 </style>

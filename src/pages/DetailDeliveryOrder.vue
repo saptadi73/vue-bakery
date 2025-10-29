@@ -103,7 +103,12 @@
         <button @click="updateReceiver" class="update-btn" :disabled="status === 'closed'">
           {{ existingReceive ? 'Update Receiver' : 'Create Receiver' }}
         </button>
-        <button @click="closeOrder" class="close-btn" :disabled="status === 'closed'">
+        <button
+          v-if="existingReceive"
+          @click="closeOrder"
+          class="close-btn"
+          :disabled="status === 'closed'"
+        >
           Close Order
         </button>
       </div>
