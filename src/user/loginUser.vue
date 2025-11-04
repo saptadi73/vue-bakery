@@ -5,10 +5,15 @@
         href="#"
         class="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white"
       >
-        <img class="w-16 h-16 rounded-full mr-2" src="../assets/images/yummy_cake.png" alt="logo" />
-        <span class="font-bold text-[#ca13c5] font-Poppins">Yummy</span
-        ><span class="font-semibold text-[#2b94f1] font-Roboto">Bakery</span
-        ><span class="text-base font-bold font-Poppins text-[#BDB76B}">.com</span>
+        <img
+          class="w-16 h-16 rounded-full mr-2"
+          src="../assets/images/logo_bakery.jpg"
+          alt="logo"
+        />
+        <span class="font-bold text-[#ca13c5] font-Poppins">Login</span>&nbsp;<span
+          class="font-semibold text-[#2b94f1] font-Roboto"
+          >New</span
+        >&nbsp;<span class="text-base font-bold font-Poppins text-[#BDB76B}">Sun Bread</span>
       </a>
       <div
         class="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700"

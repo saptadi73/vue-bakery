@@ -46,7 +46,7 @@
       </div>
     </form>
     <ToastCard v-if="showToast" :message="message_toast" @close="showToast = false" />
-    <LoadingOverlay v-if="isLoading" />
+    <LoadingOverlay />
   </div>
 </template>
 
@@ -68,6 +68,7 @@ export default {
       orderData: {},
       outlet_name: '',
       pic_name: '',
+      role_id: null,
       tanggal: '',
       keterangan: '',
       items: [], // Start with empty array
@@ -78,6 +79,7 @@ export default {
   },
   mounted() {
     this.orderId = this.$route.params.id
+    this.role_id = parseInt(localStorage.getItem('role_id')) || null
     this.fetchOrderDetail()
   },
   methods: {
@@ -152,7 +154,12 @@ export default {
         this.message_toast = response.data.message || 'Order berhasil diupdate'
         this.showToast = true
         setTimeout(() => {
-          this.$router.push('/order/list')
+          if (this.role_id === 2 || this.role_id === 3) {
+            this.$router.push('/order/list')
+            return
+          } else {
+            this.$router.push('/order/all')
+          }
         }, 2000)
       } catch (error) {
         console.error('Error updating order:', error)

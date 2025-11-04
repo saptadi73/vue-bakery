@@ -369,9 +369,9 @@ export default {
       doc.setTextColor(0, 0, 0)
       doc.setFontSize(8)
       doc.setFont('helvetica', 'normal')
-      doc.text('PT. Bakery Indonesia', 20, 35)
-      doc.text('Jl. Raya Bakery No. 123, Jakarta', 20, 40)
-      doc.text('Tel: (021) 12345678 | Email: info@bakery.co.id', 20, 45)
+      doc.text('PT. Garuda Mas Cemerlang', 20, 35)
+      doc.text('Jl. Golden BCI Ruko E1 03, Jakarta', 20, 40)
+
       yPosition = 55
 
       // Order Details Box

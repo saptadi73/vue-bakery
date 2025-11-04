@@ -194,6 +194,7 @@ router.beforeEach((to, from, next) => {
     '/produk/list',
     '/outlet/list',
     '/order/list',
+    'order/edit/:id',
     '/order/create',
     '/delivery/orders/outlet',
     '/delivery/orders',

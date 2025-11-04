@@ -2,7 +2,7 @@
   <div class="p-8 space-y-8">
     <!-- Main Title Section -->
     <div class="flex justify-center items-center mb-8">
-      <h1 class="text-4xl font-semibold text-gray-800 font-montserrat">Dashboard Yummy Bakery</h1>
+      <h1 class="text-4xl font-semibold text-gray-800 font-montserrat">Dashboard New Sun Bread</h1>
     </div>
 
     <!-- Summary Section -->

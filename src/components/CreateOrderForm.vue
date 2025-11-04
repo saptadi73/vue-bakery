@@ -74,6 +74,7 @@ export default {
   mounted() {
     this.pic_name = localStorage.getItem('username') || ''
     this.tanggal = this.getCurrentDateTimeIndonesia()
+    this.role_id = parseInt(localStorage.getItem('role_id'))
     this.fetchOutletName()
   },
   methods: {
@@ -132,6 +133,14 @@ export default {
     tutupToast() {
       this.showToast = false
       window.location.reload()
+      setTimeout(() => {
+        if (this.role_id === 2 || this.role_id === 3) {
+          this.$router.push('/order/list')
+          return
+        } else {
+          this.$router.push('/order/all')
+        }
+      }, 2000)
     },
   },
 }
