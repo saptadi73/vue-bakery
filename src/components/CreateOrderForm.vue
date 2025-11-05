@@ -38,7 +38,7 @@
         <button type="submit" class="submit-btn">Submit Order</button>
       </div>
     </form>
-    <ToastCard v-if="showToast" :message="message_toast" @close="tutupToast" />
+    <ToastCard v-if="showToast" :message_toast="message_toast" @close="tutupToast" />
     <LoadingOverlay />
   </div>
 </template>
@@ -133,6 +133,7 @@ export default {
     tutupToast() {
       this.showToast = false
       window.location.reload()
+      this.items = [{}]
       setTimeout(() => {
         if (this.role_id === 2 || this.role_id === 3) {
           this.$router.push('/order/list')
