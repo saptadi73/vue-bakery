@@ -58,6 +58,7 @@
                 <div class="action-buttons">
                   <button
                     v-if="!item.provider_id"
+                    type="button"
                     @click="createSingleProvider(item)"
                     class="keep-btn"
                   >
@@ -200,9 +201,26 @@ export default {
     async createSingleProvider(item) {
       this.loadingStore.show()
       try {
+        // First, fill stock by calling products/moving/income endpoint
+        const stockPayload = {
+          product_id: item.product_id,
+          outlet_id: item.outlet_id,
+          quantity: item.quantity_provider,
+          type: 'income',
+          tanggal: new Date().toISOString().split('T')[0], // Current date
+          pic: localStorage.getItem('username'),
+          keterangan: 'Stock replenishment before provider creation for order_item_id ' + item.id,
+        }
+        const stockResponse = await api.post(`${BASE_URL}products/moving`, stockPayload)
+
+        if (!stockResponse.data.status) {
+          throw new Error('Failed to fill stock')
+        }
+        console.log('Stock Replenishment Response: ', stockResponse.data)
+
         const payload = {
           order_items_id: item.id,
-          quantity: item.quantity,
+          quantity: item.quantity_provider,
           tanggal: new Date().toISOString().split('T')[0], // Current date
           pic: localStorage.getItem('username'),
         }
@@ -228,14 +246,29 @@ export default {
     async createMultiProvider() {
       this.loadingStore.show()
       try {
-        const providers = this.items
-          .filter((item) => !item.provider_id)
-          .map((item) => ({
-            order_items_id: item.id,
-            quantity: item.quantity_provider || item.quantity,
-            tanggal: new Date().toISOString().split('T')[0], // Current date
-            pic: localStorage.getItem('username'),
-          }))
+        // First, fill stock by calling products/moving/multi/income endpoint
+        const itemsToProvide = this.items.filter((item) => !item.provider_id)
+        const products = itemsToProvide.map((item) => ({
+          product_id: item.product_id,
+          outlet_id: item.outlet_id,
+          type: 'income',
+          quantity: item.quantity_provider || item.quantity,
+          tanggal: new Date().toISOString().split('T')[0], // Current date
+          pic: localStorage.getItem('username'),
+          keterangan: 'Stock replenishment before provider creation for order_item_id ' + item.id,
+        }))
+        const stockPayload = { products }
+        const stockResponse = await api.post(`${BASE_URL}products/moving/multi`, stockPayload)
+        if (!stockResponse.data.status) {
+          throw new Error('Failed to fill stock')
+        }
+
+        const providers = itemsToProvide.map((item) => ({
+          order_items_id: item.id,
+          quantity: item.quantity_provider || item.quantity,
+          tanggal: new Date().toISOString().split('T')[0], // Current date
+          pic: localStorage.getItem('username'),
+        }))
 
         const payload = { providers }
         console.log('Payload Multi Provider: ', payload)

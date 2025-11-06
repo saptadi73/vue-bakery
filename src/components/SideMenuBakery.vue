@@ -164,7 +164,7 @@ const navItems = reactive([
         url: '/produk/summary',
       },
       {
-        text: 'Summary Order Roti',
+        text: 'Cetak PDF Kitchen',
         url: '/produk/summary/roti',
       },
     ],

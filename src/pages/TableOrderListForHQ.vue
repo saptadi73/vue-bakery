@@ -169,7 +169,7 @@
             v-if="order.status_order === 'new'"
             class="delivery-btn"
             @click="createDelivery(order)"
-            title="Create Delivery"
+            title="Create Provider"
           >
             <font-awesome-icon :icon="['fas', 'truck']" />
           </button>
@@ -386,7 +386,7 @@ export default {
       this.$router.push(`/order/edit/${order.id}`)
     },
     createDelivery(order) {
-      this.$router.push(`/delivery/create/${order.id}`)
+      this.$router.push(`/kitchen/distribution/form/${order.id}`)
     },
   },
 }

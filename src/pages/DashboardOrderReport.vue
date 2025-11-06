@@ -121,115 +121,116 @@
             </tr>
           </thead>
           <tbody>
-            <tr
-              v-for="order in reportData.details"
-              :key="order.order_id"
-              :class="{ 'has-discrepancies': order.has_discrepancies }"
-            >
-              <td>{{ order.no_order }}</td>
-              <td>{{ order.outlet_name }}</td>
-              <td>{{ order.pic_name }}</td>
-              <td>{{ formatDate(order.tanggal) }}</td>
-              <td>
-                <span :class="getStatusClass(order.status_order)" class="status-badge">
-                  {{ order.status_order }}
-                </span>
-              </td>
-              <td>{{ order.total_ordered_quantity }}</td>
-              <td>{{ order.total_delivered_quantity }}</td>
-              <td>{{ order.total_received_quantity }}</td>
-              <td>
-                <span v-if="order.has_discrepancies" class="discrepancy-badge">
-                  <font-awesome-icon :icon="['fas', 'exclamation-triangle']" />
-                  Yes
-                </span>
-                <span v-else class="no-discrepancy-badge">
-                  <font-awesome-icon :icon="['fas', 'check']" />
-                  No
-                </span>
-              </td>
-              <td>
-                <button class="view-details-btn" @click="toggleOrderDetails(order.order_id)">
-                  <font-awesome-icon
-                    :icon="
-                      expandedOrders.includes(order.order_id)
-                        ? ['fas', 'chevron-up']
-                        : ['fas', 'chevron-down']
-                    "
-                  />
-                  Details
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Order Items Details -->
-      <div
-        v-for="order in reportData.details"
-        :key="'details-' + order.order_id"
-        v-show="expandedOrders.includes(order.order_id)"
-        class="order-items-details"
-      >
-        <h4>Items for {{ order.no_order }}</h4>
-        <div class="items-table-container">
-          <table class="items-table">
-            <thead>
-              <tr>
-                <th>Product Name</th>
-                <th>Quantity Ordered</th>
-                <th>Status</th>
-                <th>Provided</th>
-                <th>Delivered</th>
-                <th>Received</th>
-                <th>Discrepancy</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="item in order.items"
-                :key="item.product_id"
-                :class="{ 'item-discrepancy': item.discrepancy }"
-              >
-                <td>{{ item.product_name }}</td>
-                <td>{{ item.quantity_ordered }}</td>
+            <template v-for="order in reportData.details" :key="order.order_id">
+              <tr :class="{ 'has-discrepancies': order.has_discrepancies }">
+                <td>{{ order.no_order }}</td>
+                <td>{{ order.outlet_name }}</td>
+                <td>{{ order.pic_name }}</td>
+                <td>{{ formatDate(order.tanggal) }}</td>
                 <td>
-                  <span :class="getItemStatusClass(item.status)" class="item-status-badge">
-                    {{ item.status }}
+                  <span :class="getStatusClass(order.status_order)" class="status-badge">
+                    {{ order.status_order }}
+                  </span>
+                </td>
+                <td>{{ order.total_ordered_quantity }}</td>
+                <td>{{ order.total_delivered_quantity }}</td>
+                <td>{{ order.total_received_quantity }}</td>
+                <td>
+                  <span v-if="order.has_discrepancies" class="discrepancy-badge">
+                    <font-awesome-icon :icon="['fas', 'exclamation-triangle']" />
+                    Yes
+                  </span>
+                  <span v-else class="no-discrepancy-badge">
+                    <font-awesome-icon :icon="['fas', 'check']" />
+                    No
                   </span>
                 </td>
                 <td>
-                  <font-awesome-icon
-                    :icon="item.provided ? ['fas', 'check'] : ['fas', 'times']"
-                    :class="item.provided ? 'status-yes' : 'status-no'"
-                  />
-                </td>
-                <td>
-                  <font-awesome-icon
-                    :icon="item.delivered ? ['fas', 'check'] : ['fas', 'times']"
-                    :class="item.delivered ? 'status-yes' : 'status-no'"
-                  />
-                </td>
-                <td>
-                  <font-awesome-icon
-                    :icon="item.received ? ['fas', 'check'] : ['fas', 'times']"
-                    :class="item.received ? 'status-yes' : 'status-no'"
-                  />
-                </td>
-                <td>
-                  <font-awesome-icon
-                    :icon="item.discrepancy ? ['fas', 'exclamation-triangle'] : ['fas', 'check']"
-                    :class="item.discrepancy ? 'status-warning' : 'status-success'"
-                  />
+                  <button class="view-details-btn" @click="toggleOrderDetails(order.order_id)">
+                    <font-awesome-icon
+                      :icon="
+                        expandedOrders.includes(order.order_id)
+                          ? ['fas', 'chevron-up']
+                          : ['fas', 'chevron-down']
+                      "
+                    />
+                    Details
+                  </button>
                 </td>
               </tr>
-            </tbody>
-          </table>
-        </div>
+              <tr v-if="expandedOrders.includes(order.order_id)">
+                <td :colspan="10" class="expanded-row">
+                  <div class="order-items-details">
+                    <h4>Items for {{ order.no_order }}</h4>
+                    <div class="items-table-container">
+                      <table class="items-table">
+                        <thead>
+                          <tr>
+                            <th>Product Name</th>
+                            <th>Quantity Ordered</th>
+                            <th>Status</th>
+                            <th>Provided</th>
+                            <th>Delivered</th>
+                            <th>Received</th>
+                            <th>Discrepancy</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr
+                            v-for="item in order.items"
+                            :key="item.product_id"
+                            :class="{ 'item-discrepancy': item.discrepancy }"
+                          >
+                            <td>{{ item.product_name }}</td>
+                            <td>{{ item.quantity_ordered }}</td>
+                            <td>
+                              <span
+                                :class="getItemStatusClass(item.status)"
+                                class="item-status-badge"
+                              >
+                                {{ item.status }}
+                              </span>
+                            </td>
+                            <td>
+                              <font-awesome-icon
+                                :icon="item.provided ? ['fas', 'check'] : ['fas', 'times']"
+                                :class="item.provided ? 'status-yes' : 'status-no'"
+                              />
+                            </td>
+                            <td>
+                              <font-awesome-icon
+                                :icon="item.delivered ? ['fas', 'check'] : ['fas', 'times']"
+                                :class="item.delivered ? 'status-yes' : 'status-no'"
+                              />
+                            </td>
+                            <td>
+                              <font-awesome-icon
+                                :icon="item.received ? ['fas', 'check'] : ['fas', 'times']"
+                                :class="item.received ? 'status-yes' : 'status-no'"
+                              />
+                            </td>
+                            <td>
+                              <font-awesome-icon
+                                :icon="
+                                  item.discrepancy
+                                    ? ['fas', 'exclamation-triangle']
+                                    : ['fas', 'check']
+                                "
+                                :class="item.discrepancy ? 'status-warning' : 'status-success'"
+                              />
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
       </div>
     </div>
-
     <!-- Empty State -->
     <div v-else-if="!isLoading" class="empty-state">
       <font-awesome-icon :icon="['fas', 'chart-line']" class="empty-icon" />
@@ -273,6 +274,40 @@ export default {
         const response = await api.get(`${BASE_URL}reports/orders`)
         if (response.data.status) {
           this.reportData = response.data.data
+          // Recalculate summary based on details to ensure items with provider_id (status 'provided') are counted as provided
+          this.reportData.summary = {
+            total_orders: this.reportData.details.length,
+            orders_delivered: this.reportData.details.filter(
+              (order) => order.status_order === 'delivered',
+            ).length,
+            orders_closed: this.reportData.details.filter(
+              (order) => order.status_order === 'closed',
+            ).length,
+            orders_with_discrepancies: this.reportData.details.filter(
+              (order) => order.has_discrepancies,
+            ).length,
+            total_order_items: this.reportData.details.reduce(
+              (sum, order) => sum + order.items.length,
+              0,
+            ),
+            items_provided: this.reportData.details.reduce(
+              (sum, order) => sum + order.items.filter((item) => item.status === 'provided').length,
+              0,
+            ),
+            items_delivered: this.reportData.details.reduce(
+              (sum, order) => sum + order.items.filter((item) => item.delivered).length,
+              0,
+            ),
+            items_received: this.reportData.details.reduce(
+              (sum, order) => sum + order.items.filter((item) => item.received).length,
+              0,
+            ),
+            items_with_discrepancies: this.reportData.details.reduce(
+              (sum, order) => sum + order.items.filter((item) => item.discrepancy).length,
+              0,
+            ),
+          }
+          console.log('Fetched Order Report:', this.reportData)
         } else {
           this.message_toast = 'Gagal mengambil data laporan order'
           this.showToast = true
