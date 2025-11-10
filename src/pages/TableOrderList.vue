@@ -7,6 +7,15 @@
     <div class="search-bar">
       <input v-model="searchQuery" type="text" placeholder="Cari order..." class="search-input" />
     </div>
+    <!-- Status Filter -->
+    <div class="filter-bar">
+      <select v-model="statusFilter" class="filter-select">
+        <option value="">Semua Status</option>
+        <option value="open">Open</option>
+        <option value="delivered">Delivered</option>
+        <option value="completed">Completed</option>
+      </select>
+    </div>
     <!-- Tabel untuk desktop -->
     <table class="order-table" v-if="!isMobile">
       <thead>
@@ -26,20 +35,20 @@
           <td>{{ order.pic_name }}</td>
           <td>{{ order.outlet_name }}</td>
           <td>
-            <span :class="getStatusClass(order.status_order)" class="status-badge">
-              {{ order.status_order }}
+            <span :class="getStatusClass(order.status)" class="status-badge">
+              {{ order.status }}
             </span>
           </td>
           <td>
             <button
-              v-if="order.status_order !== 'delivered' && order.status_order !== 'completed'"
+              v-if="order.status !== 'delivered' && order.status !== 'completed'"
               class="edit-btn"
               @click="editOrder(order)"
             >
               Edit
             </button>
             <button
-              v-if="order.status_order !== 'delivered' && order.status_order !== 'completed'"
+              v-if="order.status !== 'delivered' && order.status !== 'completed'"
               class="delete-btn"
               @click="confirmDelete(order)"
             >
@@ -58,21 +67,21 @@
           <div class="order-pic">PIC: {{ order.pic_name }}</div>
           <div class="order-outlet">Outlet: {{ order.outlet_name }}</div>
           <div class="order-status">
-            <span :class="getStatusClass(order.status_order)" class="status-badge">
-              {{ order.status_order }}
+            <span :class="getStatusClass(order.status)" class="status-badge">
+              {{ order.status }}
             </span>
           </div>
         </div>
         <div class="order-actions">
           <button
-            v-if="order.status_order !== 'delivered' && order.status_order !== 'completed'"
+            v-if="order.status !== 'delivered' && order.status !== 'completed'"
             class="edit-btn"
             @click="editOrder(order)"
           >
             Edit
           </button>
           <button
-            v-if="order.status_order !== 'delivered' && order.status_order !== 'completed'"
+            v-if="order.status !== 'delivered' && order.status !== 'completed'"
             class="delete-btn"
             @click="confirmDelete(order)"
           >
@@ -115,6 +124,7 @@ export default {
     return {
       orders: [],
       searchQuery: '',
+      statusFilter: '',
       isMobile: false,
       showDeleteModal: false,
       deleteOrder: null,
@@ -125,13 +135,24 @@ export default {
   },
   computed: {
     filteredOrders() {
-      if (!this.searchQuery) return this.orders
-      return this.orders.filter(
-        (order) =>
-          order.no_order.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-          order.pic_name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-          order.outlet_name.toLowerCase().includes(this.searchQuery.toLowerCase()),
-      )
+      let filtered = this.orders
+
+      // Search filter
+      if (this.searchQuery) {
+        filtered = filtered.filter(
+          (order) =>
+            order.no_order.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+            order.pic_name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+            order.outlet_name.toLowerCase().includes(this.searchQuery.toLowerCase()),
+        )
+      }
+
+      // Status filter
+      if (this.statusFilter) {
+        filtered = filtered.filter((order) => order.status === this.statusFilter)
+      }
+
+      return filtered
     },
   },
   mounted() {
@@ -162,6 +183,8 @@ export default {
           this.message_toast = 'Gagal mengambil data order'
           this.showToast = true
         }
+
+        console.log('Fetched orders Order List:', this.orders)
       } catch (error) {
         console.error('Error fetching orders:', error)
         this.message_toast = 'Terjadi kesalahan saat mengambil data order'
@@ -182,10 +205,9 @@ export default {
     },
     getStatusClass(status) {
       const classes = {
-        new: 'status-new',
-        processing: 'status-processing',
+        open: 'status-new',
+        delivered: 'status-delivered',
         completed: 'status-completed',
-        cancelled: 'status-cancelled',
       }
       return classes[status] || 'status-default'
     },
@@ -263,6 +285,17 @@ export default {
   width: 300px;
 }
 
+.filter-bar {
+  margin-bottom: 16px;
+}
+
+.filter-select {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  width: 200px;
+}
+
 .order-table {
   width: 100%;
   border-collapse: collapse;
@@ -297,19 +330,14 @@ export default {
   color: #1976d2;
 }
 
-.status-processing {
-  background: #fff3e0;
-  color: #f57c00;
-}
-
-.status-completed {
+.status-delivered {
   background: #e8f5e8;
   color: #388e3c;
 }
 
-.status-cancelled {
-  background: #ffebee;
-  color: #d32f2f;
+.status-completed {
+  background: #fff3e0;
+  color: #f57c00;
 }
 
 .status-default {
@@ -404,6 +432,9 @@ export default {
     align-items: stretch;
   }
   .search-input {
+    width: 100%;
+  }
+  .filter-select {
     width: 100%;
   }
 }

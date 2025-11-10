@@ -25,7 +25,7 @@
       <div class="filter-controls">
         <select v-model="statusFilter" class="filter-select">
           <option value="">Semua Status</option>
-          <option value="new">New</option>
+          <option value="open">Open</option>
           <option value="delivered">Delivered</option>
           <option value="completed">Completed</option>
         </select>
@@ -64,9 +64,9 @@
             Outlet Name
             <font-awesome-icon :icon="getSortIcon('outlet_name')" class="sort-icon" />
           </th>
-          <th @click="sortBy('status_order')" class="sortable-header" style="width: 12%">
+          <th @click="sortBy('status')" class="sortable-header" style="width: 12%">
             Status Order
-            <font-awesome-icon :icon="getSortIcon('status_order')" class="sort-icon" />
+            <font-awesome-icon :icon="getSortIcon('status')" class="sort-icon" />
           </th>
           <th style="width: 18%">Aksi</th>
         </tr>
@@ -78,14 +78,14 @@
           <td>{{ order.pic_name }}</td>
           <td>{{ order.outlet_name }}</td>
           <td>
-            <span :class="getStatusClass(order.status_order)" class="status-badge">
-              {{ order.status_order }}
+            <span :class="getStatusClass(order.status)" class="status-badge">
+              {{ order.status }}
             </span>
           </td>
           <td>
             <div class="action-buttons">
               <button
-                v-if="order.status_order === 'new'"
+                v-if="order.status === 'open'"
                 class="edit-btn"
                 @click="editOrder(order)"
                 title="Edit Order"
@@ -93,7 +93,7 @@
                 <font-awesome-icon :icon="['fas', 'edit']" />
               </button>
               <button
-                v-if="order.status_order === 'new'"
+                v-if="order.status === 'open'"
                 class="delivery-btn"
                 @click="createDelivery(order)"
                 title="Create Delivery"
@@ -151,14 +151,14 @@
           <div class="order-pic">PIC: {{ order.pic_name }}</div>
           <div class="order-outlet">Outlet: {{ order.outlet_name }}</div>
           <div class="order-status">
-            <span :class="getStatusClass(order.status_order)" class="status-badge">
-              {{ order.status_order }}
+            <span :class="getStatusClass(order.status)" class="status-badge">
+              {{ order.status }}
             </span>
           </div>
         </div>
         <div class="order-actions">
           <button
-            v-if="order.status_order === 'new'"
+            v-if="order.status === 'open'"
             class="edit-btn"
             @click="editOrder(order)"
             title="Edit Order"
@@ -166,7 +166,7 @@
             <font-awesome-icon :icon="['fas', 'edit']" />
           </button>
           <button
-            v-if="order.status_order === 'new'"
+            v-if="order.status === 'open'"
             class="delivery-btn"
             @click="createDelivery(order)"
             title="Create Provider"
@@ -235,7 +235,7 @@ export default {
 
       // Status filter
       if (this.statusFilter) {
-        filtered = filtered.filter((order) => order.status_order === this.statusFilter)
+        filtered = filtered.filter((order) => order.status === this.statusFilter)
       }
 
       // Date range filter
@@ -323,7 +323,7 @@ export default {
             `"${this.formatDate(order.tanggal)}"`,
             `"${order.pic_name}"`,
             `"${order.outlet_name}"`,
-            `"${order.status_order}"`,
+            `"${order.status}"`,
           ].join(','),
         ),
       ].join('\n')
@@ -355,6 +355,7 @@ export default {
           this.message_toast = 'Gagal mengambil data order'
           this.showToast = true
         }
+        console.log('Fetched orders Order List:', this.orders)
       } catch (error) {
         console.error('Error fetching orders:', error)
         this.message_toast = 'Terjadi kesalahan saat mengambil data order'
@@ -376,7 +377,7 @@ export default {
 
     getStatusClass(status) {
       const classes = {
-        new: 'status-new',
+        open: 'status-new',
         delivered: 'status-delivered',
         completed: 'status-completed',
       }

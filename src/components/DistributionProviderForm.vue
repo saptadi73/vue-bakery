@@ -106,6 +106,7 @@ export default {
     return {
       orderId: null,
       orderData: {},
+      outlet_id: null,
       outlet_name: '',
       pic_name: '',
       tanggal: '',
@@ -139,6 +140,7 @@ export default {
         const response = await axios.get(`${BASE_URL}orders/${this.orderId}`)
         if (response.data.status) {
           this.orderData = response.data.data
+          this.outlet_id = this.orderData.outlet_id
           this.outlet_name = this.orderData.outlet_name
           this.pic_name = this.orderData.pic_name
           this.tanggal = this.formatDateTime(this.orderData.tanggal)
@@ -202,15 +204,19 @@ export default {
       this.loadingStore.show()
       try {
         // First, fill stock by calling products/moving/income endpoint
+        const outletId = localStorage.getItem('outlet_id')
+        if (!outletId) {
+          throw new Error('Outlet ID tidak ditemukan di localStorage')
+        }
         const stockPayload = {
           product_id: item.product_id,
-          outlet_id: item.outlet_id,
-          quantity: item.quantity_provider,
           type: 'income',
-          tanggal: new Date().toISOString().split('T')[0], // Current date
-          pic: localStorage.getItem('username'),
+          outlet_id: parseInt(outletId),
+          quantity: item.quantity_provider,
           keterangan: 'Stock replenishment before provider creation for order_item_id ' + item.id,
+          pic: localStorage.getItem('username'),
         }
+        console.log('Stock Payload Single Provider:', stockPayload)
         const stockResponse = await api.post(`${BASE_URL}products/moving`, stockPayload)
 
         if (!stockResponse.data.status) {
@@ -246,21 +252,28 @@ export default {
     async createMultiProvider() {
       this.loadingStore.show()
       try {
-        // First, fill stock by calling products/moving/multi/income endpoint
+        // First, fill stock by calling products/moving endpoint for each item
+        const outletId = localStorage.getItem('outlet_id')
+        if (!outletId) {
+          throw new Error('Outlet ID tidak ditemukan di localStorage')
+        }
         const itemsToProvide = this.items.filter((item) => !item.provider_id)
-        const products = itemsToProvide.map((item) => ({
-          product_id: item.product_id,
-          outlet_id: item.outlet_id,
-          type: 'income',
-          quantity: item.quantity_provider || item.quantity,
-          tanggal: new Date().toISOString().split('T')[0], // Current date
-          pic: localStorage.getItem('username'),
-          keterangan: 'Stock replenishment before provider creation for order_item_id ' + item.id,
-        }))
-        const stockPayload = { products }
-        const stockResponse = await api.post(`${BASE_URL}products/moving/multi`, stockPayload)
-        if (!stockResponse.data.status) {
-          throw new Error('Failed to fill stock')
+
+        // Process each item individually
+        for (const item of itemsToProvide) {
+          const stockPayload = {
+            product_id: item.product_id,
+            type: 'income',
+            outlet_id: parseInt(outletId),
+            quantity: item.quantity_provider || item.quantity,
+            keterangan: 'Stock replenishment before provider creation for order_item_id ' + item.id,
+            pic: localStorage.getItem('username'),
+          }
+          console.log('Stock Payload Multi Provider Item:', stockPayload)
+          const stockResponse = await api.post(`${BASE_URL}products/moving`, stockPayload)
+          if (!stockResponse.data.status) {
+            throw new Error('Failed to fill stock for product ' + item.product_id)
+          }
         }
 
         const providers = itemsToProvide.map((item) => ({
@@ -293,19 +306,24 @@ export default {
       this.loadingStore.show()
       try {
         // Collect data from items array
+        const outletId = localStorage.getItem('outlet_id')
+        if (!outletId) {
+          throw new Error('Outlet ID tidak ditemukan di localStorage')
+        }
         const orderData = {
           order_id: this.orderId,
           keterangan: this.keterangan,
           pic: localStorage.getItem('username'),
           items: this.items.map((item) => ({
             product_id: parseInt(item.product_id),
-            outlet_id: parseInt(item.outlet_id),
+            outlet_id: parseInt(outletId),
             quantity: item.quantity_provider || item.quantity,
             pic: item.pic,
             provider_id: item.provider_id,
           })),
         }
         console.log('Create Delivery Order Data:', orderData)
+        console.log('Outlet ID from localStorage:', outletId)
         const response = await api.post(`${BASE_URL}delivery-orders/new`, orderData)
         this.message_toast = response.data.message || 'Delivery Order berhasil dibuat'
         this.showToast = true

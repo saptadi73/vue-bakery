@@ -57,6 +57,8 @@ export default {
   components: { ItemCard, ToastCard, LoadingOverlay },
   data() {
     return {
+      outlet_id: '',
+      user_id: '',
       outlet_name: '',
       pic_name: '',
       tanggal: '',
@@ -72,6 +74,8 @@ export default {
     return { loadingStore }
   },
   mounted() {
+    this.outlet_id = localStorage.getItem('outlet_id') || ''
+    this.user_id = localStorage.getItem('user_id') || ''
     this.pic_name = localStorage.getItem('username') || ''
     this.tanggal = this.getCurrentDateTimeIndonesia()
     this.role_id = parseInt(localStorage.getItem('role_id'))
@@ -104,6 +108,8 @@ export default {
       try {
         // Collect data from itemCards
         const orderData = {
+          outlet_id: parseInt(this.outlet_id),
+          user_id: parseInt(this.user_id),
           outlet_name: this.outlet_name,
           pic_name: this.pic_name,
           tanggal: this.tanggal,
