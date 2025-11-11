@@ -2,7 +2,7 @@
   <div class="product-summary-container">
     <div class="header-section">
       <div>
-        <h2 class="title">📦 Ringkasan Produk</h2>
+        <h2 class="title">📦 Ringkasan Produk untuk Cetak PDF</h2>
         <p class="subtitle">Menampilkan daftar produk berdasarkan kategori dan hasil pencarian</p>
       </div>
       <button @click="printPDF" class="print-btn"><i class="fa fa-file-pdf"></i> Cetak PDF</button>
@@ -100,7 +100,7 @@ export default {
             (p.kode && p.kode.toLowerCase().includes(q)),
         )
       }
-      return filtered
+      return filtered.sort((a, b) => b.total_orders - a.total_orders)
     },
   },
   mounted() {

@@ -1,6 +1,6 @@
 <template>
   <div class="product-summary-container">
-    <h2>Ringkasan Produk dan Pengisian Stock oleh Kitchen</h2>
+    <h2 class="font-lexend text-slate-300">Ringkasan Order</h2>
     <div class="search-bar">
       <input
         v-model="searchQuery"
@@ -24,7 +24,6 @@
             <th>Stock</th>
             <th>Total Orders</th>
             <th>Category</th>
-            <th>Aksi</th>
           </tr>
         </thead>
         <tbody>
@@ -43,24 +42,11 @@
             <td>{{ product.stock }}</td>
             <td>{{ product.total_orders }}</td>
             <td>{{ product.category }}</td>
-            <td class="action-cell">
-              <input
-                v-model.number="stockUpdates[product.id]"
-                type="number"
-                placeholder="Jumlah stock"
-                class="stock-input"
-                min="0"
-              />
-              <button @click="addStock(product)" class="add-stock-btn">Tambahkan Stock</button>
-              <button @click="reduceStock(product)" class="reduce-stock-btn">Kurangi Stock</button>
-            </td>
           </tr>
         </tbody>
       </table>
     </div>
-    <div v-if="updateStatus" class="update-status">{{ updateStatus }}</div>
     <loading-overlay />
-    <ToastCard v-if="showToast" :message_toast="message_toast" @close="tutupToast" />
   </div>
 </template>
 
@@ -69,21 +55,15 @@ import axios from 'axios'
 import { BASE_URL } from '../base.utils.url.ts'
 import LoadingOverlay from '@/components/LoadingOverlay.vue'
 import { useLoadingStore } from '@/stores/loading'
-import api from '@/user/axios.js'
-import ToastCard from '@/components/ToastCard.vue'
 
 export default {
   name: 'TableProductSummary',
-  components: { LoadingOverlay, ToastCard },
+  components: { LoadingOverlay },
   data() {
     return {
       products: [],
       searchQuery: '',
       selectedCategory: '',
-      stockUpdates: {},
-      updateStatus: '',
-      showToast: false,
-      message_toast: '',
     }
   },
   setup() {
@@ -102,76 +82,6 @@ export default {
       } finally {
         this.loadingStore.hide()
       }
-    },
-    async addStock(product) {
-      const quantity = this.stockUpdates[product.id]
-      if (quantity === undefined || quantity === null || quantity <= 0) {
-        this.updateStatus = 'Masukkan jumlah stock yang valid (lebih dari 0).'
-        return
-      }
-      try {
-        this.loadingStore.show()
-        const response = await api.post(`${BASE_URL}products/moving`, {
-          keterangan: 'isi stock dari kitchen',
-          pic: localStorage.getItem('username'),
-          product_id: product.id,
-          outlet_id: 1,
-          quantity: quantity,
-          type: 'income',
-        })
-        this.updateStatus = 'Stock berhasil ditambahkan!'
-        this.showToast = true
-        this.message_toast = response.data.message || 'Stock berhasil ditambahkan!'
-        // Update the local product stock
-        product.stock = (product.stock || 0) + quantity
-        // Clear the input
-        delete this.stockUpdates[product.id]
-        console.log('Stock added:', response.data)
-      } catch (err) {
-        this.updateStatus = err.response?.data?.message || 'Gagal menambahkan stock.'
-        console.error('Error adding stock:', err)
-      } finally {
-        this.loadingStore.hide()
-      }
-    },
-    async reduceStock(product) {
-      const quantity = this.stockUpdates[product.id]
-      if (quantity === undefined || quantity === null || quantity <= 0) {
-        this.updateStatus = 'Masukkan jumlah stock yang valid (lebih dari 0).'
-        return
-      }
-      if ((product.stock || 0) < quantity) {
-        this.updateStatus = 'Stock tidak cukup untuk dikurangi.'
-        return
-      }
-      try {
-        this.loadingStore.show()
-        const response = await api.post(`${BASE_URL}products/moving`, {
-          keterangan: 'kurangi stock dari kitchen',
-          pic: localStorage.getItem('username'),
-          product_id: product.id,
-          outlet_id: 1,
-          quantity: quantity,
-          type: 'outcome',
-        })
-        this.updateStatus = 'Stock berhasil dikurangi!'
-        this.showToast = true
-        this.message_toast = response.data.message || 'Stock berhasil dikurangi!'
-        // Update the local product stock
-        product.stock = (product.stock || 0) - quantity
-        // Clear the input
-        delete this.stockUpdates[product.id]
-        console.log('Stock reduced:', response.data)
-      } catch (err) {
-        this.updateStatus = err.response?.data?.message || 'Gagal mengurangi stock.'
-        console.error('Error reducing stock:', err)
-      } finally {
-        this.loadingStore.hide()
-      }
-    },
-    tutupToast() {
-      this.showToast = false
-      window.location.reload()
     },
   },
   computed: {
@@ -308,58 +218,6 @@ export default {
 
 .product-link:hover {
   text-decoration: underline;
-}
-
-.action-cell {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.stock-input {
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid #ddd;
-  width: 100px;
-  font-size: 0.9em;
-}
-
-.add-stock-btn {
-  background: #28a745;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 12px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background 0.2s;
-}
-
-.add-stock-btn:hover {
-  background: #218838;
-}
-
-.reduce-stock-btn {
-  background: #dc3545;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 12px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background 0.2s;
-}
-
-.reduce-stock-btn:hover {
-  background: #c82333;
-}
-
-.update-status {
-  margin-top: 20px;
-  text-align: center;
-  color: #28a745;
-  font-weight: 500;
 }
 
 @media (max-width: 768px) {

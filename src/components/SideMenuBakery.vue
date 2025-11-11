@@ -160,7 +160,7 @@ const navItems = reactive([
         url: '/kitchen/adjustment',
       },
       {
-        text: 'Summary Produk dan Isi Stock',
+        text: 'Summary Order',
         url: '/produk/summary',
       },
       {

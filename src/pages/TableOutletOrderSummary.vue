@@ -13,22 +13,6 @@
         <label>Total Orders:</label>
         <input type="number" v-model="total_orders" readonly />
       </div>
-      <div class="input-group">
-        <label>Total Stock:</label>
-        <input type="number" v-model="total_stock" readonly />
-      </div>
-      <div class="input-group">
-        <label>Total Stock yang Akan Dikirim:</label>
-        <input
-          type="number"
-          :value="totalQuantityToSend"
-          readonly
-          :class="{
-            'exceeding-stock': isTotalExceedingStock,
-            'within-stock': isTotalWithinStock,
-          }"
-        />
-      </div>
     </div>
 
     <table class="outlet-order-summary-table" v-if="!isMobile">
@@ -37,8 +21,6 @@
           <th>Gambar Outlet</th>
           <th>Nama Outlet</th>
           <th>Jumlah Order</th>
-          <th>Kirim Stock</th>
-          <th>Aksi</th>
         </tr>
       </thead>
       <tbody>
@@ -65,26 +47,6 @@
           </td>
           <td>{{ item.outlet_name }}</td>
           <td>{{ item.quantity }}</td>
-          <td>
-            <input
-              v-model.number="item.sendQuantity"
-              type="number"
-              placeholder="0"
-              class="send-input"
-              min="0"
-              :max="item.quantity"
-              @input="checkStockLimit"
-            />
-          </td>
-          <td>
-            <button
-              @click="sendStock(item)"
-              class="send-btn"
-              :disabled="!item.sendQuantity || item.sendQuantity <= 0 || item.sent"
-            >
-              {{ item.sent ? 'Sudah Dikirim' : 'Kirim' }}
-            </button>
-          </td>
         </tr>
       </tbody>
     </table>
@@ -126,11 +88,7 @@
         <button class="img-modal-close" @click="closeImageModal">&times;</button>
       </div>
     </div>
-    <div class="action-bar">
-      <button @click="sendAllStock" class="send-all-btn" :disabled="allSent">
-        Kirim Semua Stock
-      </button>
-    </div>
+
     <div v-if="sendStatus" class="send-status">{{ sendStatus }}</div>
   </div>
   <loading-overlay />
@@ -142,7 +100,6 @@ import LoadingOverlay from '@/components/LoadingOverlay.vue'
 import { useLoadingStore } from '@/stores/loading'
 import { BASE_URL } from '@/base.utils.url'
 import { useRoute } from 'vue-router'
-import api from '@/user/axios'
 
 export default {
   name: 'TableOutletOrderSummary',
@@ -165,7 +122,6 @@ export default {
       showModal: false,
       modalImageUrl: '',
       total_orders: 0,
-      total_stock: 0,
       sendStatus: '',
     }
   },
@@ -178,15 +134,6 @@ export default {
           (item.outlet_name && item.outlet_name.toLowerCase().includes(q)) ||
           (item.outlet_id && String(item.outlet_id).toLowerCase().includes(q)),
       )
-    },
-    totalQuantityToSend() {
-      return this.filteredData.reduce((sum, item) => sum + (item.sendQuantity || 0), 0)
-    },
-    isTotalExceedingStock() {
-      return this.totalQuantityToSend > this.total_stock
-    },
-    isTotalWithinStock() {
-      return this.totalQuantityToSend > 0 && this.totalQuantityToSend <= this.total_stock
     },
     allSent() {
       return this.data.every((item) => item.sent)
@@ -216,97 +163,7 @@ export default {
         this.loadingStore.hide()
       }
     },
-    async fetchInventory(id) {
-      try {
-        const response = await axios.get(`${BASE_URL}products/inventory/${id}`)
-        this.total_stock = response.data.data.quantity || 0
-        console.log('Inventory data:', response.data)
-      } catch (error) {
-        console.error('Error fetching inventory:', error)
-        this.total_stock = 0
-      }
-    },
-    async sendStock(item) {
-      const quantity = item.sendQuantity
-      if (!quantity || quantity <= 0) {
-        this.sendStatus = 'Masukkan jumlah yang valid.'
-        return
-      }
-      if (quantity > this.total_stock) {
-        this.sendStatus = 'Jumlah stock yang dikirim melebihi total stock yang tersedia.'
-        return
-      }
-      try {
-        this.loadingStore.show()
-        const payload = {
-          providers: [
-            {
-              order_items_id: item.order_items_id,
-              quantity: quantity,
-              tanggal: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
-              pic: localStorage.getItem('username') || '',
-            },
-          ],
-        }
-        const response = await api.post(`${BASE_URL}orders/providers`, payload)
-        this.sendStatus = 'Stock berhasil dikirim!'
-        // Update total_stock after successful send
-        this.total_stock -= quantity
-        // Mark as sent
-        item.sent = true
-        // Clear the input
-        item.sendQuantity = null
-        console.log('Send stock response:', response.data)
-      } catch (error) {
-        this.sendStatus = error.response?.data?.message || 'Gagal mengirim stock.'
-        console.error('Error sending stock:', error)
-      } finally {
-        this.loadingStore.hide()
-      }
-    },
-    async sendAllStock() {
-      const itemsToSend = this.filteredData.filter(
-        (item) => item.sendQuantity && item.sendQuantity > 0,
-      )
-      if (itemsToSend.length === 0) {
-        this.sendStatus = 'Tidak ada stock yang akan dikirim.'
-        return
-      }
-      const totalQuantityToSend = itemsToSend.reduce((sum, item) => sum + item.sendQuantity, 0)
-      if (totalQuantityToSend > this.total_stock) {
-        this.sendStatus = 'Total stock yang dikirim melebihi total stock yang tersedia.'
-        return
-      }
-      try {
-        this.loadingStore.show()
-        const providers = itemsToSend.map((item) => ({
-          order_items_id: item.order_items_id,
-          quantity: item.sendQuantity,
-          tanggal: new Date().toISOString().split('T')[0],
-          pic: localStorage.getItem('username') || '',
-        }))
-        const payload = { providers }
-        const response = await api.post(`${BASE_URL}orders/providers`, payload)
-        this.sendStatus = 'Semua stock berhasil dikirim!'
-        // Update total_stock after successful send
-        this.total_stock -= totalQuantityToSend
-        // Mark all as sent
-        itemsToSend.forEach((item) => {
-          item.sent = true
-          item.sendQuantity = null
-        })
-        console.log('Send all stock response:', response.data)
-      } catch (error) {
-        this.sendStatus = error.response?.data?.message || 'Gagal mengirim semua stock.'
-        console.error('Error sending all stock:', error)
-      } finally {
-        this.loadingStore.hide()
-      }
-    },
-    checkStockLimit() {
-      // This method is called on input change to ensure reactivity of computed properties
-      // The computed properties totalQuantityToSend and isTotalExceedingStock will automatically update
-    },
+
     goBack() {
       this.$router.push('/produk/summary')
     },
@@ -320,32 +177,6 @@ export default {
     // Ambil id dari params dan fetch data
     if (this.route && this.route.params && this.route.params.id) {
       await this.fetchData(this.route.params.id)
-      await this.fetchInventory(this.route.params.id)
-      // Pre-fill inputs based on stock availability and priority
-      if (this.total_orders <= this.total_stock) {
-        // If total orders <= total stock, fill all
-        this.data.forEach((item) => {
-          item.sendQuantity = item.quantity
-        })
-      } else {
-        // If total orders > total stock, prioritize by outlet_priority (highest first)
-        let remainingStock = this.total_stock
-        // Sort by outlet_priority descending (highest priority first)
-        const sortedData = [...this.data].sort(
-          (a, b) => (b.outlet_priority || 0) - (a.outlet_priority || 0),
-        )
-        sortedData.forEach((item) => {
-          if (remainingStock >= item.quantity) {
-            item.sendQuantity = item.quantity
-            remainingStock -= item.quantity
-          } else if (remainingStock > 0) {
-            item.sendQuantity = remainingStock
-            remainingStock = 0
-          } else {
-            item.sendQuantity = 0
-          }
-        })
-      }
     }
   },
   beforeUnmount() {
@@ -514,83 +345,6 @@ export default {
   background: #fff;
   font-size: 1em;
   text-align: center;
-}
-
-.input-group input.exceeding-stock {
-  border-color: #dc3545;
-  background-color: #f8d7da;
-  color: #721c24;
-}
-
-.input-group input.within-stock {
-  border-color: #28a745;
-  background-color: #d4edda;
-  color: #155724;
-}
-.action-bar {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
-  margin-top: 18px;
-}
-
-.send-all-btn {
-  background: #28a745;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 10px 20px;
-  font-size: 1em;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background 0.2s;
-}
-
-.send-all-btn:hover {
-  background: #218838;
-}
-
-.send-status {
-  margin-top: 20px;
-  text-align: center;
-  color: #28a745;
-  font-weight: 500;
-}
-
-.send-input {
-  padding: 6px 8px;
-  border-radius: 4px;
-  border: 1px solid #ddd;
-  width: 80px;
-  font-size: 0.9em;
-  text-align: center;
-}
-
-.send-btn {
-  background: #007bff;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  padding: 6px 12px;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 0.9em;
-  transition: background 0.2s;
-}
-
-.send-btn:hover:not(:disabled) {
-  background: #0056b3;
-}
-
-.send-btn:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-}
-
-.send-all-btn:disabled {
-  background: #ccc;
-  cursor: not-allowed;
 }
 
 .back-btn {
