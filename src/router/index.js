@@ -124,6 +124,11 @@ const router = createRouter({
           name: 'registrasi',
           component: () => import('../components/UserRegisterForm.vue'),
         },
+        {
+          path: 'list',
+          name: 'list users',
+          component: () => import('../pages/TableUsers.vue'),
+        },
       ],
     },
     {

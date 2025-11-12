@@ -204,6 +204,10 @@ const navItems = reactive([
         text: 'Register',
         url: '/user/register',
       },
+      {
+        text: 'List Users',
+        url: '/user/list',
+      },
     ],
   },
 ])
