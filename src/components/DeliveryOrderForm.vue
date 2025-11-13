@@ -5,7 +5,7 @@
       <div class="form-grid">
         <div class="form-group">
           <label>Tanggal Waktu</label>
-          <input v-model="tanggal" type="text" readonly class="form-control" />
+          <input v-model="tanggal" type="datetime-local" class="form-control" />
         </div>
         <div class="form-group">
           <label>Nama Outlet</label>
@@ -176,13 +176,13 @@ export default {
     },
     formatDateTime(dateString) {
       const date = new Date(dateString)
-      return date.toLocaleDateString('id-ID', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
+      const indonesiaTime = new Date(date.getTime() + 7 * 60 * 60 * 1000) // Convert to UTC+7
+      const year = indonesiaTime.getFullYear()
+      const month = String(indonesiaTime.getMonth() + 1).padStart(2, '0')
+      const day = String(indonesiaTime.getDate()).padStart(2, '0')
+      const hours = String(indonesiaTime.getHours()).padStart(2, '0')
+      const minutes = String(indonesiaTime.getMinutes()).padStart(2, '0')
+      return `${year}-${month}-${day}T${hours}:${minutes}`
     },
 
     checkStock(item) {

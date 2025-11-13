@@ -215,7 +215,8 @@ export default {
     },
     formatDate(dateString) {
       const date = new Date(dateString)
-      return date.toLocaleDateString('id-ID', {
+      const indonesiaTime = new Date(date.getTime() + 7 * 60 * 60 * 1000) // Convert to UTC+7
+      return indonesiaTime.toLocaleDateString('id-ID', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',

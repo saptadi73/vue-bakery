@@ -129,7 +129,13 @@ export default {
     },
     formatDateTime(dateString) {
       const date = new Date(dateString)
-      return date.toISOString().slice(0, 16)
+      const indonesiaTime = new Date(date.getTime() + 7 * 60 * 60 * 1000) // Convert to UTC+7
+      const year = indonesiaTime.getFullYear()
+      const month = String(indonesiaTime.getMonth() + 1).padStart(2, '0')
+      const day = String(indonesiaTime.getDate()).padStart(2, '0')
+      const hours = String(indonesiaTime.getHours()).padStart(2, '0')
+      const minutes = String(indonesiaTime.getMinutes()).padStart(2, '0')
+      return `${year}-${month}-${day}T${hours}:${minutes}`
     },
     addItem() {
       this.items.push({})
