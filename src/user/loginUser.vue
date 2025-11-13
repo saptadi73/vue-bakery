@@ -86,47 +86,54 @@ async function login() {
   const email = document.getElementById('email').value
   const password = document.getElementById('password').value
   const dataLogin = { email: email, password: password }
-  const response = await axios.post(`${BASE_URL}login`, dataLogin, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  })
+  try {
+    const response = await axios.post(`${BASE_URL}login`, dataLogin, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
 
-  if (response.data.status == true) {
-    // console.log(response.data.data.level.nama);
-    const token = response.data.data.token
-    const role_id = response.data.data.role_id
-    const role = response.data.data.role
-    const outlet_id = response.data.data.outlet_id
-    const outlet_name = response.data.data.outlet_name
-    const username = response.data.data.user.name
-    const user_id = response.data.data.user.id
-    // console.log('datanya role', role);
-    localStorage.setItem('token', token)
-    localStorage.setItem('role', role)
-    localStorage.setItem('email', email)
-    localStorage.setItem('username', username)
-    localStorage.setItem('user_id', user_id)
-    localStorage.setItem('role_id', role_id)
-    localStorage.setItem('outlet_id', outlet_id)
-    localStorage.setItem('outlet_name', outlet_name)
+    if (response.data.status == true) {
+      // console.log(response.data.data.level.nama);
+      const token = response.data.data.token
+      const role_id = response.data.data.role_id
+      const role = response.data.data.role
+      const outlet_id = response.data.data.outlet_id
+      const outlet_name = response.data.data.outlet_name
+      const username = response.data.data.user.name
+      const user_id = response.data.data.user.id
+      // console.log('datanya role', role);
+      localStorage.setItem('token', token)
+      localStorage.setItem('role', role)
+      localStorage.setItem('email', email)
+      localStorage.setItem('username', username)
+      localStorage.setItem('user_id', user_id)
+      localStorage.setItem('role_id', role_id)
+      localStorage.setItem('outlet_id', outlet_id)
+      localStorage.setItem('outlet_name', outlet_name)
+      showToast.value = true
+      toastMessage.value = response.data.message
+    } else {
+      showToast.value = true
+      toastMessage.value = 'Salah Email dan Password'
+      console.log(response.data)
+    }
+  } catch (error) {
     showToast.value = true
-    toastMessage.value = response.data.message
-  } else {
-    showToast.value = true
-    toastMessage.value = response.data.message
-    console.log(response.data)
+    toastMessage.value = 'Salah Email dan Password'
+    console.log(error)
   }
 }
 
 function tutupToast() {
   showToast.value = false
   const roleId = localStorage.getItem('role_id')
-  if (roleId === '2' || roleId === '3') {
+  if (roleId && (roleId === '2' || roleId === '3')) {
     router.push('/produk/list')
-  } else {
+  } else if (roleId) {
     router.push('/main/dashboard')
   }
+  // If no roleId (error case), stay on login page
 }
 </script>
 

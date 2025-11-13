@@ -13,6 +13,7 @@
           <th>No.</th>
           <th>Name</th>
           <th>Email</th>
+          <th>Aksi</th>
         </tr>
       </thead>
       <tbody>
@@ -20,6 +21,9 @@
           <td>{{ index + 1 }}</td>
           <td>{{ user.name }}</td>
           <td>{{ user.email }}</td>
+          <td>
+            <button @click="openDeleteModal(user)" class="delete-btn">Delete</button>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -30,12 +34,23 @@
           <div class="user-no">{{ index + 1 }}</div>
           <div class="user-name">{{ user.name }}</div>
           <div class="user-email">{{ user.email }}</div>
+          <div class="user-actions">
+            <button @click="openDeleteModal(user)" class="delete-btn-mobile">Delete</button>
+          </div>
         </div>
       </div>
     </div>
 
     <ToastCard v-if="showToast" :message="message_toast" @close="showToast = false" />
     <LoadingOverlay v-if="isLoading" />
+    <DeleteUserModal
+      v-if="showDeleteModal"
+      :show="showDeleteModal"
+      :userId="userToDelete?.id"
+      :userName="userToDelete?.name"
+      @close="closeDeleteModal"
+      @deleted="onUserDeleted"
+    />
   </div>
 </template>
 
@@ -44,10 +59,11 @@ import api from '@/user/axios.js'
 import { BASE_URL } from '../base.utils.url.ts'
 import ToastCard from '../components/ToastCard.vue'
 import LoadingOverlay from '../components/LoadingOverlay.vue'
+import DeleteUserModal from '../components/DeleteUserModal.vue'
 
 export default {
   name: 'TableUsers',
-  components: { ToastCard, LoadingOverlay },
+  components: { ToastCard, LoadingOverlay, DeleteUserModal },
   data() {
     return {
       users: [],
@@ -56,6 +72,8 @@ export default {
       showToast: false,
       message_toast: '',
       isLoading: false,
+      showDeleteModal: false,
+      userToDelete: null,
     }
   },
   computed: {
@@ -100,6 +118,19 @@ export default {
       } finally {
         this.isLoading = false
       }
+    },
+    openDeleteModal(user) {
+      this.userToDelete = user
+      this.showDeleteModal = true
+    },
+    closeDeleteModal() {
+      this.showDeleteModal = false
+      this.userToDelete = null
+    },
+    onUserDeleted() {
+      this.fetchUsers()
+      this.message_toast = 'User berhasil dihapus'
+      this.showToast = true
     },
   },
 }
@@ -151,6 +182,21 @@ export default {
   border-bottom: 1px solid #eee;
 }
 
+.delete-btn {
+  background: #d32f2f;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background 0.2s;
+}
+
+.delete-btn:hover {
+  background: #b71c1c;
+}
+
 .users-table th {
   background: #f8f9fa;
   font-weight: 600;
@@ -192,6 +238,25 @@ export default {
 .user-email {
   font-size: 0.9em;
   color: #666;
+}
+
+.user-actions {
+  margin-top: 8px;
+}
+
+.delete-btn-mobile {
+  background: #d32f2f;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background 0.2s;
+}
+
+.delete-btn-mobile:hover {
+  background: #b71c1c;
 }
 
 @media (max-width: 768px) {

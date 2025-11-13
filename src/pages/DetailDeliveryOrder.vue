@@ -4,7 +4,7 @@
       <h2>Detail Delivery Order</h2>
       <div class="top-buttons">
         <button class="print-btn" @click="printPDF">Print PDF</button>
-        <button class="back-btn" @click="$router.go(-1)">← Kembali</button>
+        <button class="back-btn" @click="goBack">← Kembali</button>
       </div>
     </div>
 
@@ -502,6 +502,14 @@ export default {
 
       // Save the PDF
       doc.save(`Delivery_Order_${this.deliveryOrder.no_do || 'Detail'}.pdf`)
+    },
+    goBack() {
+      const outletId = localStorage.getItem('outlet_id')
+      if (outletId && outletId !== '1') {
+        this.$router.push('/delivery/orders/outlet')
+      } else {
+        this.$router.push('/delivery/orders')
+      }
     },
   },
 }
