@@ -5,7 +5,7 @@
       <div class="form-grid">
         <div class="form-group">
           <label>Tanggal Waktu</label>
-          <input v-model="tanggal" type="text" readonly class="form-control" />
+          <input v-model="tanggal" type="datetime-local" class="form-control" />
         </div>
         <div class="form-group">
           <label>Nama Outlet</label>
@@ -95,7 +95,7 @@ export default {
     getCurrentDateTimeIndonesia() {
       const now = new Date()
       const indonesiaTime = new Date(now.getTime() + 7 * 60 * 60 * 1000) // UTC+7
-      return indonesiaTime.toISOString().slice(0, 19).replace('T', ' ')
+      return indonesiaTime.toISOString().slice(0, 16)
     },
     addItem() {
       this.items.push({})

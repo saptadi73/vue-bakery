@@ -5,7 +5,7 @@
       <div class="form-grid">
         <div class="form-group">
           <label>Tanggal Waktu</label>
-          <input v-model="tanggal" type="text" readonly class="form-control" />
+          <input v-model="tanggal" type="datetime-local" class="form-control" />
         </div>
         <div class="form-group">
           <label>Nama Outlet</label>
@@ -55,6 +55,7 @@ import axios from 'axios'
 import ItemCard from './ItemCard.vue'
 import ToastCard from './ToastCard.vue'
 import LoadingOverlay from './LoadingOverlay.vue'
+import { useLoadingStore } from '@/stores/loading'
 import { BASE_URL } from '../base.utils.url.ts'
 import api from '@/user/axios'
 
@@ -77,6 +78,11 @@ export default {
       isLoading: false,
     }
   },
+  setup() {
+    // Setup logic if needed
+    const loadingStore = useLoadingStore()
+    return { loadingStore }
+  },
   mounted() {
     this.orderId = this.$route.params.id
     this.role_id = parseInt(localStorage.getItem('role_id')) || null
@@ -84,7 +90,7 @@ export default {
   },
   methods: {
     async fetchOrderDetail() {
-      this.isLoading = true
+      this.loadingStore.show()
       try {
         const response = await axios.get(`${BASE_URL}orders/${this.orderId}`)
         if (response.data.status) {
@@ -108,6 +114,7 @@ export default {
           if (this.items.length === 0) {
             this.items = [{}]
           }
+          console.log('Fetched Order Data:', response.data.data)
         } else {
           this.message_toast = 'Gagal mengambil detail order'
           this.showToast = true
@@ -117,18 +124,12 @@ export default {
         this.message_toast = 'Terjadi kesalahan saat mengambil detail order'
         this.showToast = true
       } finally {
-        this.isLoading = false
+        this.loadingStore.hide()
       }
     },
     formatDateTime(dateString) {
       const date = new Date(dateString)
-      return date.toLocaleDateString('id-ID', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
+      return date.toISOString().slice(0, 16)
     },
     addItem() {
       this.items.push({})
@@ -137,7 +138,7 @@ export default {
       this.items.splice(index, 1)
     },
     async submitEditOrder() {
-      this.isLoading = true
+      this.loadingStore.show()
       try {
         // Collect data from itemCards
         const orderData = {
@@ -166,7 +167,7 @@ export default {
         this.message_toast = 'Failed to update order. Please try again.'
         this.showToast = true
       } finally {
-        this.isLoading = false
+        this.loadingStore.hide()
       }
     },
   },
