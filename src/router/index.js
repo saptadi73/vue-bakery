@@ -112,6 +112,11 @@ const router = createRouter({
           name: 'order report',
           component: () => import('../pages/DashboardOrderReport.vue'),
         },
+        {
+          path: 'reports/order/:id',
+          name: 'order report detail',
+          component: () => import('../pages/OrderReportDetail.vue'),
+        },
       ],
     },
     {

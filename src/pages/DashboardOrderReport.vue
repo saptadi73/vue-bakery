@@ -123,7 +123,9 @@
           <tbody>
             <template v-for="order in reportData.details" :key="order.order_id">
               <tr :class="{ 'has-discrepancies': order.has_discrepancies }">
-                <td>{{ order.no_order }}</td>
+                <td class="clickable-order" @click="goToOrderDetail(order.order_id)">
+                  {{ order.no_order }}
+                </td>
                 <td>{{ order.outlet_name }}</td>
                 <td>{{ order.pic_name }}</td>
                 <td>{{ formatDate(order.tanggal) }}</td>
@@ -355,6 +357,9 @@ export default {
         this.expandedOrders.push(orderId)
       }
     },
+    goToOrderDetail(orderId) {
+      this.$router.push({ name: 'order report detail', params: { id: orderId } })
+    },
   },
 }
 </script>
@@ -574,6 +579,16 @@ export default {
 
 .view-details-btn:hover {
   background: #1976d2;
+}
+
+.clickable-order {
+  cursor: pointer;
+  color: #2196f3;
+  text-decoration: underline;
+}
+
+.clickable-order:hover {
+  color: #1976d2;
 }
 
 .order-items-details {
