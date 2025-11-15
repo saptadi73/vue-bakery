@@ -78,6 +78,7 @@ import ToastCard from '../components/ToastCard.vue'
 
 const showToast = ref(false)
 const toastMessage = ref('')
+const loginSuccess = ref(false)
 
 async function login() {
   localStorage.removeItem('token')
@@ -111,14 +112,17 @@ async function login() {
       localStorage.setItem('role_id', role_id)
       localStorage.setItem('outlet_id', outlet_id)
       localStorage.setItem('outlet_name', outlet_name)
+      loginSuccess.value = true
       showToast.value = true
       toastMessage.value = response.data.message
     } else {
+      loginSuccess.value = false
       showToast.value = true
       toastMessage.value = 'Salah Email dan Password'
       console.log(response.data)
     }
   } catch (error) {
+    loginSuccess.value = false
     showToast.value = true
     toastMessage.value = 'Salah Email dan Password'
     console.log(error)
@@ -127,13 +131,16 @@ async function login() {
 
 function tutupToast() {
   showToast.value = false
-  const roleId = localStorage.getItem('role_id')
-  if (roleId && (roleId === '2' || roleId === '3')) {
-    router.push('/produk/list')
-  } else if (roleId) {
-    router.push('/main/dashboard')
+  if (loginSuccess.value) {
+    const roleId = localStorage.getItem('role_id')
+    if (roleId && (roleId === '2' || roleId === '3')) {
+      router.push('/produk/list')
+    } else if (roleId) {
+      router.push('/main/dashboard')
+    }
+    // If no roleId (success case), stay on login page
   }
-  // If no roleId (error case), stay on login page
+  // If login not successful, stay on login page
 }
 </script>
 
