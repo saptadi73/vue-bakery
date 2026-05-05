@@ -84,7 +84,7 @@ export default {
   methods: {
     async fetchOutlet() {
       try {
-        const response = await api.get(`${BASE_URL}outlets/${this.outletId}`)
+        const response = await api.get(`outlets/${this.outletId}`)
         const outlet = response.data.data
         this.form.nama = outlet.nama || ''
         this.form.alamat = outlet.alamat || ''
@@ -129,7 +129,7 @@ export default {
         console.log(`${key}: ${value}`)
       }
       try {
-        await api.post(`${BASE_URL}outlets/update/${this.outletId}`, formData, {
+        await api.post(`outlets/update/${this.outletId}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         })
         this.updateStatus = 'Update berhasil!'

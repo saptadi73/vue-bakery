@@ -257,7 +257,7 @@ export default {
     },
     async getCategories() {
       try {
-        const response = await api.get(`${BASE_URL}categories`)
+        const response = await api.get(`categories`)
         this.categories = response.data.data
       } catch (error) {
         console.error('Error fetching categories:', error)

@@ -201,7 +201,7 @@ export default {
         }
 
         console.log('Payload Single Provider: ', payload)
-        const response = await api.post(`${BASE_URL}orders/providers/single`, payload)
+        const response = await api.post(`orders/providers/single`, payload)
         if (response.data.status) {
           this.message_toast = 'Single provider berhasil dibuat'
           this.showToast = true
@@ -235,7 +235,7 @@ export default {
           })),
         }
         console.log('Create Delivery Order Data:', orderData)
-        const response = await api.post(`${BASE_URL}delivery-orders/new`, orderData)
+        const response = await api.post(`delivery-orders/new`, orderData)
         this.message_toast = response.data.message || 'Delivery Order berhasil dibuat'
         this.showToast = true
         setTimeout(() => {

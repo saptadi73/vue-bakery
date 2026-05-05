@@ -221,7 +221,7 @@ export default {
     async deleteOrderConfirmed() {
       this.isLoading = true
       try {
-        await api.delete(`${BASE_URL}orders/${this.deleteOrder.id}`)
+        await api.delete(`orders/${this.deleteOrder.id}`)
         this.message_toast = 'Order berhasil dihapus'
         this.showToast = true
         this.showDeleteModal = false

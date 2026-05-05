@@ -75,7 +75,6 @@
 </template>
 
 <script>
-import { BASE_URL } from '../base.utils.url.ts'
 import ToastCard from '../components/ToastCard.vue'
 import LoadingOverlay from '../components/LoadingOverlay.vue'
 import api from '@/user/axios.js'
@@ -127,7 +126,7 @@ export default {
           this.showToast = true
           return
         }
-        const response = await api.get(`${BASE_URL}delivery-orders/list/${outletId}`)
+        const response = await api.get(`delivery-orders/list/${outletId}`)
         if (response.data.status) {
           this.orders = response.data.data
         } else {

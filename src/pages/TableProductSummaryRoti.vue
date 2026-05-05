@@ -67,7 +67,6 @@
 </template>
 
 <script>
-import { BASE_URL } from '../base.utils.url.ts'
 import LoadingOverlay from '../components/LoadingOverlay.vue'
 import ToastCard from '../components/ToastCard.vue'
 import api from '@/user/axios.js'
@@ -110,7 +109,7 @@ export default {
     async fetchProducts() {
       this.isLoading = true
       try {
-        const response = await api.get(`${BASE_URL}products/summary/roti`)
+        const response = await api.get(`products/summary/roti`)
         if (response.data.status) {
           this.products = response.data.data
           this.categories = [...new Set(response.data.data.map((p) => p.category).filter(Boolean))]

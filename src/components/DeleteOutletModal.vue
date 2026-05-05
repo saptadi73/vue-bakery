@@ -14,7 +14,6 @@
 
 <script>
 import api from '@/user/axios'
-import { BASE_URL } from '@/base.utils.url.ts'
 
 export default {
   name: 'DeleteOutletModal',
@@ -36,7 +35,7 @@ export default {
   methods: {
     async confirmDelete() {
       try {
-        await api.delete(`${BASE_URL}outlets/${this.outletId}`)
+        await api.delete(`outlets/${this.outletId}`)
         this.$emit('deleted')
         this.closeModal()
       } catch (error) {

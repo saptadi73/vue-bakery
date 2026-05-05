@@ -246,7 +246,6 @@
 </template>
 
 <script>
-import { BASE_URL } from '../base.utils.url.ts'
 import ToastCard from '../components/ToastCard.vue'
 import LoadingOverlay from '../components/LoadingOverlay.vue'
 import api from '@/user/axios.js'
@@ -273,7 +272,7 @@ export default {
     async fetchOrderReport() {
       this.isLoading = true
       try {
-        const response = await api.get(`${BASE_URL}reports/orders`)
+        const response = await api.get(`reports/orders`)
         if (response.data.status) {
           this.reportData = response.data.data
           // Recalculate summary based on details to ensure items with provider_id (status 'provided') are counted as provided

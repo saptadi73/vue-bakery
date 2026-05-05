@@ -157,7 +157,7 @@ export default {
           })),
         }
         console.log('Update Order Data:', orderData)
-        const response = await api.put(`${BASE_URL}orders/${this.orderId}`, orderData)
+        const response = await api.put(`orders/${this.orderId}`, orderData)
         this.message_toast = response.data.message || 'Order berhasil diupdate'
         this.showToast = true
         setTimeout(() => {

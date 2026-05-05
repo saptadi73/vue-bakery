@@ -172,7 +172,7 @@ export default {
       this.loadingStore.show()
       try {
         const orderId = this.$route.params.id
-        const response = await api.get(`${BASE_URL}delivery-orders/${orderId}`)
+        const response = await api.get(`delivery-orders/${orderId}`)
         if (response.data.status) {
           this.deliveryOrder = response.data.data
           this.status = this.deliveryOrder.status || 'open'
@@ -270,7 +270,7 @@ export default {
             })),
           }
 
-          const response = await api.put(`${BASE_URL}receives/${this.existingReceive.id}`, payload)
+          const response = await api.put(`receives/${this.existingReceive.id}`, payload)
           console.log('Update payload Receive:', payload)
           if (response.data.status) {
             this.message_toast = 'Receiver updated successfully'
@@ -296,7 +296,7 @@ export default {
             })),
           }
 
-          const response = await api.post(`${BASE_URL}receives/new`, payload)
+          const response = await api.post(`receives/new`, payload)
           console.log('Create payload Receive:', payload)
           if (response.data.status) {
             this.message_toast = 'Receiver created successfully'

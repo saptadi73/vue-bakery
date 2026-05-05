@@ -122,7 +122,7 @@ export default {
           })),
         }
         console.log('Order Data:', orderData)
-        const response = await api.post(`${BASE_URL}orders/new`, orderData)
+        const response = await api.post(`orders/new`, orderData)
         this.showToast = true
         this.message_toast = response.data.message
 

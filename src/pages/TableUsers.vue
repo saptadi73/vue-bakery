@@ -56,7 +56,6 @@
 
 <script>
 import api from '@/user/axios.js'
-import { BASE_URL } from '../base.utils.url.ts'
 import ToastCard from '../components/ToastCard.vue'
 import LoadingOverlay from '../components/LoadingOverlay.vue'
 import DeleteUserModal from '../components/DeleteUserModal.vue'
@@ -103,7 +102,7 @@ export default {
     async fetchUsers() {
       this.isLoading = true
       try {
-        const response = await api.get(`${BASE_URL}users`)
+        const response = await api.get(`users`)
         if (response.data.status) {
           this.users = response.data.data
         } else {

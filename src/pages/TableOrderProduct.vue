@@ -280,7 +280,7 @@ export default {
     },
     async getCategories() {
       try {
-        const response = await api.get(`${BASE_URL}categories`)
+        const response = await api.get(`categories`)
         this.categories = response.data.data
       } catch (error) {
         console.error('Error fetching categories:', error)
@@ -306,7 +306,7 @@ export default {
         pic: pic,
       }
       try {
-        const response = await api.put(`${BASE_URL}orders/${product.order_id}`, orderData)
+        const response = await api.put(`orders/${product.order_id}`, orderData)
         console.log('Order updated:', response.data)
         alert(`Order untuk ${product.nama} berhasil diupdate menjadi ${qty}!`)
         this.orderQuantities[key] = qty
@@ -393,7 +393,7 @@ export default {
         pic: pic,
       }
       try {
-        const response = await api.post(`${BASE_URL}orders/new`, orderData)
+        const response = await api.post(`orders/new`, orderData)
         console.log('Order submitted:', response.data)
         alert(`Order untuk ${product.nama} sebanyak ${qty} berhasil disubmit!`)
         this.orderQuantities[key] = qty // tetap gunakan qty yang baru

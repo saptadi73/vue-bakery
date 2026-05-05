@@ -389,7 +389,7 @@ export default {
       formData.append('file', this.uploadForm.gambar)
       try {
         // Ganti URL berikut dengan endpoint backend Anda
-        const response = await api.post(`${BASE_URL}outlets/new`, formData, {
+        const response = await api.post(`outlets/new`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         })
         this.uploadStatus = response.data.message || 'Tambah berhasil!'

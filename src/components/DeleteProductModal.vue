@@ -18,7 +18,6 @@
 
 <script>
 import api from '@/user/axios'
-import { BASE_URL } from '@/base.utils.url.ts'
 
 export default {
   name: 'DeleteProductModal',
@@ -45,7 +44,7 @@ export default {
   methods: {
     async confirmDelete() {
       try {
-        await api.post(`${BASE_URL}products/delete/${this.productId}`)
+        await api.post(`products/delete/${this.productId}`)
         this.deleteStatus = 'Produk berhasil dihapus!'
         this.$emit('deleted')
         setTimeout(() => {

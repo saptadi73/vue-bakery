@@ -83,7 +83,6 @@
 </template>
 
 <script>
-import { BASE_URL } from '../base.utils.url.ts'
 import ToastCard from '../components/ToastCard.vue'
 import LoadingOverlay from '../components/LoadingOverlay.vue'
 import api from '@/user/axios.js'
@@ -106,7 +105,7 @@ export default {
     async fetchReceiveDetail() {
       this.isLoading = true
       try {
-        const response = await api.get(`${BASE_URL}receives/${this.$route.params.id}`)
+        const response = await api.get(`receives/${this.$route.params.id}`)
         if (response.data.status) {
           this.receive = response.data.data
         } else {

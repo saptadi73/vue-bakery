@@ -338,7 +338,7 @@ export default {
       console.log('Data Payload: ', payload)
       try {
         this.loadingStore.show()
-        const response = await api.post(`${BASE_URL}products/moving`, payload)
+        const response = await api.post(`products/moving`, payload)
         this.message_toast = response.data.message || 'Inventory adjustment berhasil'
         this.showToast = true
         // Reset form

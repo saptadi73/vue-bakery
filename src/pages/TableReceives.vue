@@ -62,7 +62,6 @@
 </template>
 
 <script>
-import { BASE_URL } from '../base.utils.url.ts'
 import ToastCard from '../components/ToastCard.vue'
 import LoadingOverlay from '../components/LoadingOverlay.vue'
 import api from '@/user/axios.js'
@@ -107,7 +106,7 @@ export default {
     async fetchReceives() {
       this.isLoading = true
       try {
-        const response = await api.get(`${BASE_URL}receives/list`)
+        const response = await api.get(`receives/list`)
         if (response.data.status) {
           this.receives = response.data.data
         } else {

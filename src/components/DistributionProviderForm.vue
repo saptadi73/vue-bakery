@@ -217,7 +217,7 @@ export default {
           pic: localStorage.getItem('username'),
         }
         console.log('Stock Payload Single Provider:', stockPayload)
-        const stockResponse = await api.post(`${BASE_URL}products/moving`, stockPayload)
+        const stockResponse = await api.post(`products/moving`, stockPayload)
 
         if (!stockResponse.data.status) {
           throw new Error('Failed to fill stock')
@@ -232,7 +232,7 @@ export default {
         }
 
         console.log('Payload Single Provider: ', payload)
-        const response = await api.post(`${BASE_URL}orders/providers/single`, payload)
+        const response = await api.post(`orders/providers/single`, payload)
         if (response.data.status) {
           this.message_toast = 'Single provider berhasil dibuat'
           this.showToast = true
@@ -270,7 +270,7 @@ export default {
             pic: localStorage.getItem('username'),
           }
           console.log('Stock Payload Multi Provider Item:', stockPayload)
-          const stockResponse = await api.post(`${BASE_URL}products/moving`, stockPayload)
+          const stockResponse = await api.post(`products/moving`, stockPayload)
           if (!stockResponse.data.status) {
             throw new Error('Failed to fill stock for product ' + item.product_id)
           }
@@ -285,7 +285,7 @@ export default {
 
         const payload = { providers }
         console.log('Payload Multi Provider: ', payload)
-        const response = await api.post(`${BASE_URL}orders/providers/multi`, payload)
+        const response = await api.post(`orders/providers/multi`, payload)
         if (response.data.status) {
           this.message_toast = 'Multi provider berhasil dibuat'
           this.showToast = true
@@ -324,7 +324,7 @@ export default {
         }
         console.log('Create Delivery Order Data:', orderData)
         console.log('Outlet ID from localStorage:', outletId)
-        const response = await api.post(`${BASE_URL}delivery-orders/new`, orderData)
+        const response = await api.post(`delivery-orders/new`, orderData)
         this.message_toast = response.data.message || 'Delivery Order berhasil dibuat'
         this.showToast = true
         setTimeout(() => {

@@ -80,7 +80,7 @@ export default {
   methods: {
     async fetchProduct() {
       try {
-        const response = await api.get(`${BASE_URL}products/${this.productId}`)
+        const response = await api.get(`products/${this.productId}`)
         const product = response.data.data
         this.form.name = product.nama || product.name
         this.form.code = product.kode || product.code
@@ -93,7 +93,7 @@ export default {
     },
     async fetchCategories() {
       try {
-        const response = await api.get(`${BASE_URL}categories`)
+        const response = await api.get(`categories`)
         this.categories = response.data.data
       } catch (error) {
         console.error('Error fetching categories:', error)
@@ -125,7 +125,7 @@ export default {
         formData.append('file', this.form.file)
       }
       try {
-        await api.post(`${BASE_URL}products/update/${this.productId}`, formData, {
+        await api.post(`products/update/${this.productId}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         })
         this.updateStatus = 'Update berhasil!'
