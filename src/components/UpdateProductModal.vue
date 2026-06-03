@@ -84,6 +84,20 @@ export default {
     },
   },
   methods: {
+    formDataToDebugObject(formData) {
+      return Array.from(formData.entries()).reduce((payload, [key, value]) => {
+        payload[key] =
+          value instanceof File
+            ? {
+                name: value.name,
+                size: value.size,
+                type: value.type,
+              }
+            : value
+
+        return payload
+      }, {})
+    },
     async fetchProduct() {
       if (!this.productId) return
       try {
@@ -153,16 +167,40 @@ export default {
       if (this.form.file) {
         formData.append('file', this.form.file)
       }
+
+      const endpoint = `products/update/${this.productId}`
+      const debugPayload = this.formDataToDebugObject(formData)
+
+      console.groupCollapsed('[DEBUG update harga produk] request')
+      console.log('endpoint:', `${BASE_URL}${endpoint}`)
+      console.log('payload:', debugPayload)
+      console.groupEnd()
+
       try {
-        await api.post(`products/update/${this.productId}`, formData, {
+        const response = await api.post(endpoint, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         })
+
+        console.groupCollapsed('[DEBUG update harga produk] response')
+        console.log('endpoint:', `${BASE_URL}${endpoint}`)
+        console.log('status:', response.status)
+        console.log('response:', response.data)
+        console.groupEnd()
+
         this.updateStatus = 'Update berhasil!'
         this.$emit('updated')
         setTimeout(() => {
           this.closeModal()
         }, 1000)
       } catch (error) {
+        console.groupCollapsed('[DEBUG update harga produk] error response')
+        console.log('endpoint:', `${BASE_URL}${endpoint}`)
+        console.log('payload:', debugPayload)
+        console.log('status:', error.response?.status)
+        console.log('response:', error.response?.data)
+        console.log('error:', error)
+        console.groupEnd()
+
         this.updateStatus = error.response?.data?.message || 'Update gagal!'
         console.error('Update error:', error)
       }
