@@ -253,8 +253,9 @@ export default {
     async getProducts() {
       try {
         this.loadingStore.show()
-        // Ganti URL berikut dengan endpoint backend Anda
-        const response = await axios.get(`${BASE_URL}products`)
+        const response = await axios.get(`${BASE_URL}products`, {
+          params: { _: Date.now() },
+        })
         this.products = response.data.data
         console.log('Fetched products:', this.products)
       } catch (err) {
@@ -302,7 +303,20 @@ export default {
       this.showUpdateModal = false
       this.updateProductId = null
     },
-    onProductUpdated() {
+    onProductUpdated(updatedProduct) {
+      if (updatedProduct?.id) {
+        const index = this.products.findIndex((product) => product.id === updatedProduct.id)
+
+        if (index !== -1) {
+          this.products.splice(index, 1, {
+            ...this.products[index],
+            ...updatedProduct,
+          })
+        } else {
+          this.products.push(updatedProduct)
+        }
+      }
+
       this.getProducts()
     },
     closeDeleteModal() {

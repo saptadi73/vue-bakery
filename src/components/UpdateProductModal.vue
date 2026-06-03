@@ -188,7 +188,7 @@ export default {
         console.groupEnd()
 
         this.updateStatus = 'Update berhasil!'
-        this.$emit('updated')
+        this.$emit('updated', response.data?.data)
         setTimeout(() => {
           this.closeModal()
         }, 1000)
