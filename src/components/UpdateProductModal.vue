@@ -21,6 +21,10 @@
           </select>
         </div>
         <div class="form-group">
+          <label>Harga</label>
+          <input v-model.number="form.harga" type="number" min="0" required />
+        </div>
+        <div class="form-group">
           <label>Gambar Produk (Opsional)</label>
           <input @change="onFileChange" type="file" accept="image/*" />
         </div>
@@ -38,6 +42,7 @@
 </template>
 
 <script>
+import axios from 'axios'
 import api from '@/user/axios'
 import { BASE_URL } from '@/base.utils.url.ts'
 
@@ -60,6 +65,7 @@ export default {
         name: '',
         code: '',
         category_id: '',
+        harga: 0,
         file: null,
       },
       categories: [],
@@ -79,16 +85,32 @@ export default {
   },
   methods: {
     async fetchProduct() {
+      if (!this.productId) return
       try {
-        const response = await api.get(`products/${this.productId}`)
-        const product = response.data.data
+        let response
+        try {
+          response = await api.get(`products/${this.productId}`)
+        } catch (firstError) {
+          // Fallback tanpa interceptor auth bila endpoint detail product bersifat public.
+          response = await axios.get(`${BASE_URL}products/${this.productId}`)
+        }
+
+        const payload = response?.data?.data ?? response?.data?.product ?? response?.data
+        const product = Array.isArray(payload) ? payload[0] : payload
+
+        if (!product || typeof product !== 'object') {
+          throw new Error('Product data not found in response payload')
+        }
+
         this.form.name = product.nama || product.name
         this.form.code = product.kode || product.code
-        this.form.category_id = product.category_id
+        this.form.category_id = product.category_id ?? product.category?.id ?? ''
+        this.form.harga = Number(product.harga ?? product.harga_jual ?? 0)
         this.imagePreview = product.gambar ? `${BASE_URL}${product.gambar}` : ''
+        this.updateStatus = ''
       } catch (error) {
         console.error('Error fetching product:', error)
-        this.updateStatus = 'Gagal memuat data produk.'
+        this.updateStatus = error?.response?.data?.message || 'Gagal memuat data produk.'
       }
     },
     async fetchCategories() {
@@ -113,14 +135,21 @@ export default {
       }
     },
     async submitUpdate() {
-      if (!this.form.name || !this.form.code || !this.form.category_id) {
-        this.updateStatus = 'Nama, kode, dan kategori wajib diisi.'
+      if (
+        !this.form.name ||
+        !this.form.code ||
+        !this.form.category_id ||
+        this.form.harga === '' ||
+        this.form.harga === null
+      ) {
+        this.updateStatus = 'Nama, kode, kategori, dan harga wajib diisi.'
         return
       }
       const formData = new FormData()
       formData.append('nama', this.form.name)
       formData.append('kode', this.form.code)
       formData.append('category_id', this.form.category_id)
+      formData.append('harga', Number(this.form.harga) || 0)
       if (this.form.file) {
         formData.append('file', this.form.file)
       }
@@ -147,6 +176,7 @@ export default {
         name: '',
         code: '',
         category_id: '',
+        harga: 0,
         file: null,
       }
       this.imagePreview = ''

@@ -21,8 +21,10 @@
           <tr>
             <th>Nama</th>
             <th>Kode</th>
+            <th>Harga</th>
             <th>Stock</th>
             <th>Total Orders</th>
+            <th>Total Harga</th>
             <th>Category</th>
           </tr>
         </thead>
@@ -30,7 +32,7 @@
           <tr v-for="product in filteredProducts" :key="product.id">
             <td>
               <router-link
-                v-if="product.total_orders > 0"
+                v-if="getTotalOrders(product) > 0"
                 :to="`/order/summary/outlet/${product.id}/${encodeURIComponent(product.nama)}`"
                 class="product-link"
               >
@@ -39,12 +41,18 @@
               <span v-else>{{ product.nama }}</span>
             </td>
             <td>{{ product.kode }}</td>
+            <td>{{ formatCurrency(product.harga ?? product.harga_jual ?? 0) }}</td>
             <td>{{ product.stock }}</td>
-            <td>{{ product.total_orders }}</td>
+            <td>{{ getTotalOrders(product) }}</td>
+            <td>{{ formatCurrency(getTotalHarga(product)) }}</td>
             <td>{{ product.category }}</td>
           </tr>
         </tbody>
       </table>
+    </div>
+    <div class="summary-total-box">
+      <span>Total Nilai Orders:</span>
+      <strong>{{ formatCurrency(grandTotalHarga) }}</strong>
     </div>
     <loading-overlay />
   </div>
@@ -64,6 +72,7 @@ export default {
       products: [],
       searchQuery: '',
       selectedCategory: '',
+      summaryTotalFromApi: null,
     }
   },
   setup() {
@@ -75,13 +84,56 @@ export default {
       try {
         this.loadingStore.show()
         const response = await axios.get(`${BASE_URL}products/summary`)
-        this.products = response.data.data
+        const payload = response?.data?.data
+
+        if (Array.isArray(payload)) {
+          this.products = payload
+          this.summaryTotalFromApi =
+            Number(response?.data?.total_nilai_orders ?? response?.data?.total_ordered_value) ||
+            null
+        } else {
+          this.products = payload?.items ?? payload?.products ?? []
+          this.summaryTotalFromApi =
+            Number(
+              payload?.total_nilai_orders ??
+                payload?.total_ordered_value ??
+                response?.data?.total_nilai_orders ??
+                response?.data?.total_ordered_value,
+            ) || null
+        }
+
         console.log('Fetched product summary:', this.products)
       } catch (err) {
         console.error('Error fetching product summary:', err)
       } finally {
         this.loadingStore.hide()
       }
+    },
+    formatCurrency(value) {
+      return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        maximumFractionDigits: 0,
+      }).format(Number(value) || 0)
+    },
+    getHarga(product) {
+      return Number(product?.harga ?? product?.harga_jual ?? 0)
+    },
+    getTotalOrders(product) {
+      return Number(product?.total_orders ?? product?.quantity ?? product?.qty ?? 0)
+    },
+    getTotalHarga(product) {
+      const backendTotal = Number(
+        product?.total_harga ??
+          product?.total_ordered_value ??
+          product?.subtotal_ordered ??
+          product?.subtotal ??
+          product?.total,
+      )
+      if (Number.isFinite(backendTotal) && backendTotal > 0) {
+        return backendTotal
+      }
+      return this.getHarga(product) * this.getTotalOrders(product)
     },
   },
   computed: {
@@ -102,7 +154,16 @@ export default {
       if (this.selectedCategory) {
         filtered = filtered.filter((p) => p.category === this.selectedCategory)
       }
-      return filtered.sort((a, b) => b.total_orders - a.total_orders)
+      return filtered.sort((a, b) => this.getTotalOrders(b) - this.getTotalOrders(a))
+    },
+    hasActiveFilters() {
+      return Boolean(this.searchQuery || this.selectedCategory)
+    },
+    grandTotalHarga() {
+      if (!this.hasActiveFilters && Number.isFinite(this.summaryTotalFromApi)) {
+        return this.summaryTotalFromApi
+      }
+      return this.filteredProducts.reduce((sum, product) => sum + this.getTotalHarga(product), 0)
     },
   },
   mounted() {
@@ -220,6 +281,15 @@ export default {
   text-decoration: underline;
 }
 
+.summary-total-box {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  font-size: 1.05em;
+  color: #1f2937;
+}
+
 @media (max-width: 768px) {
   .product-summary-container {
     padding: 16px;
@@ -242,6 +312,11 @@ export default {
   .product-table td {
     padding: 10px 12px;
     font-size: 0.9em;
+  }
+
+  .summary-total-box {
+    justify-content: space-between;
+    font-size: 0.95em;
   }
 }
 </style>

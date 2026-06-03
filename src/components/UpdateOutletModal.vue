@@ -41,6 +41,7 @@
 </template>
 
 <script>
+import axios from 'axios'
 import api from '@/user/axios'
 import { BASE_URL } from '@/base.utils.url.ts'
 
@@ -72,6 +73,11 @@ export default {
     }
   },
   watch: {
+    show(newVal) {
+      if (newVal && this.outletId) {
+        this.fetchOutlet()
+      }
+    },
     outletId: {
       immediate: true,
       handler(newId) {
@@ -83,18 +89,33 @@ export default {
   },
   methods: {
     async fetchOutlet() {
+      if (!this.outletId) return
       try {
-        const response = await api.get(`outlets/${this.outletId}`)
-        const outlet = response.data.data
+        let response
+        try {
+          response = await api.get(`outlets/${this.outletId}`)
+        } catch (firstError) {
+          // Fallback endpoint public tanpa interceptor auth.
+          response = await axios.get(`${BASE_URL}outlets/${this.outletId}`)
+        }
+
+        const payload = response?.data?.data ?? response?.data?.outlet ?? response?.data
+        const outlet = Array.isArray(payload) ? payload[0] : payload
+
+        if (!outlet || typeof outlet !== 'object') {
+          throw new Error('Outlet data not found in response payload')
+        }
+
         this.form.nama = outlet.nama || ''
         this.form.alamat = outlet.alamat || ''
         this.form.phone = outlet.phone || ''
         this.form.kode = outlet.kode || ''
         this.form.prioritas = outlet.prioritas || ''
         this.imagePreview = outlet.gambar ? `${BASE_URL}${outlet.gambar}` : ''
+        this.updateStatus = ''
       } catch (error) {
         console.error('Error fetching outlet:', error)
-        this.updateStatus = 'Gagal memuat data outlet.'
+        this.updateStatus = error?.response?.data?.message || 'Gagal memuat data outlet.'
       }
     },
     onFileChange(e) {

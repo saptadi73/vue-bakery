@@ -99,6 +99,16 @@
           <p>Items with Discrepancies</p>
         </div>
       </div>
+
+      <div class="card">
+        <div class="card-icon">
+          <font-awesome-icon :icon="['fas', 'money-bill-wave']" />
+        </div>
+        <div class="card-content">
+          <h3>{{ formatCurrency(reportData.summary.total_ordered_value) }}</h3>
+          <p>Total Ordered Value</p>
+        </div>
+      </div>
     </div>
 
     <!-- Details Table -->
@@ -116,6 +126,7 @@
               <th>Total Ordered</th>
               <th>Total Delivered</th>
               <th>Total Received</th>
+              <th>Total Value</th>
               <th>Discrepancies</th>
               <th>Actions</th>
             </tr>
@@ -137,6 +148,7 @@
                 <td>{{ order.total_ordered_quantity }}</td>
                 <td>{{ order.total_delivered_quantity }}</td>
                 <td>{{ order.total_received_quantity }}</td>
+                <td>{{ formatCurrency(order.total_ordered_value) }}</td>
                 <td>
                   <span v-if="order.has_discrepancies" class="discrepancy-badge">
                     <font-awesome-icon :icon="['fas', 'exclamation-triangle']" />
@@ -161,7 +173,7 @@
                 </td>
               </tr>
               <tr v-if="expandedOrders.includes(order.order_id)">
-                <td :colspan="10" class="expanded-row">
+                <td :colspan="11" class="expanded-row">
                   <div class="order-items-details">
                     <h4>Items for {{ order.no_order }}</h4>
                     <div class="items-table-container">
@@ -169,7 +181,9 @@
                         <thead>
                           <tr>
                             <th>Product Name</th>
+                            <th>Harga</th>
                             <th>Quantity Ordered</th>
+                            <th>Subtotal</th>
                             <th>Status</th>
                             <th>Provided</th>
                             <th>Delivered</th>
@@ -184,7 +198,9 @@
                             :class="{ 'item-discrepancy': item.discrepancy }"
                           >
                             <td>{{ item.product_name }}</td>
+                            <td>{{ formatCurrency(item.harga) }}</td>
                             <td>{{ item.quantity_ordered }}</td>
+                            <td>{{ formatCurrency(item.subtotal_ordered) }}</td>
                             <td>
                               <span
                                 :class="getItemStatusClass(item.status)"
@@ -275,8 +291,10 @@ export default {
         const response = await api.get(`reports/orders`)
         if (response.data.status) {
           this.reportData = response.data.data
+          const backendSummary = this.reportData.summary || {}
           // Recalculate summary based on details to ensure items with provider_id (status 'provided') are counted as provided
           this.reportData.summary = {
+            ...backendSummary,
             total_orders: this.reportData.details.length,
             orders_delivered: this.reportData.details.filter(
               (order) => order.status_order === 'delivered',
@@ -307,6 +325,16 @@ export default {
               (sum, order) => sum + order.items.filter((item) => item.discrepancy).length,
               0,
             ),
+            total_ordered_value: this.reportData.details.reduce((sum, order) => {
+              const orderValue = Number(order.total_ordered_value || 0)
+              if (orderValue > 0) return sum + orderValue
+              const itemsValue = (order.items || []).reduce((itemSum, item) => {
+                const subtotal = Number(item.subtotal_ordered || 0)
+                if (subtotal > 0) return itemSum + subtotal
+                return itemSum + Number(item.harga || 0) * Number(item.quantity_ordered || 0)
+              }, 0)
+              return sum + itemsValue
+            }, 0),
           }
           console.log('Fetched Order Report:', this.reportData)
         } else {
@@ -328,6 +356,13 @@ export default {
         month: 'short',
         day: 'numeric',
       })
+    },
+    formatCurrency(value) {
+      return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        maximumFractionDigits: 0,
+      }).format(Number(value) || 0)
     },
     getStatusClass(status) {
       const classes = {

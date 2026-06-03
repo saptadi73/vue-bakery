@@ -27,6 +27,10 @@
             </select>
           </div>
           <div class="form-group">
+            <label>Harga</label>
+            <input v-model.number="uploadForm.harga" type="number" min="0" required />
+          </div>
+          <div class="form-group">
             <label>Foto Produk</label>
             <input @change="onFileChange" type="file" accept="image/*" required />
           </div>
@@ -58,6 +62,7 @@
           <th>Nama Produk</th>
           <th>Kode Produk</th>
           <th>Kategori</th>
+          <th>Harga</th>
           <th>Aksi</th>
         </tr>
       </thead>
@@ -80,6 +85,7 @@
           <td>{{ product.nama }}</td>
           <td>{{ product.kode }}</td>
           <td>{{ product.category ? product.category.nama : '' }}</td>
+          <td>{{ formatCurrency(getHarga(product)) }}</td>
           <td class="aksi-cell">
             <button
               v-if="roleId !== '2' && roleId !== '3'"
@@ -122,6 +128,7 @@
           <div class="product-category">
             Kategori: {{ product.category ? product.category.nama : '' }}
           </div>
+          <div class="product-price">Harga: {{ formatCurrency(getHarga(product)) }}</div>
           <div class="product-order">
             <button
               v-if="roleId !== '2' && roleId !== '3'"
@@ -213,6 +220,7 @@ export default {
         name: '',
         code: '',
         category_id: '',
+        harga: 0,
         file: null,
       },
       categories: [],
@@ -376,11 +384,23 @@ export default {
         this.imagePreview = ''
       }
     },
+    getHarga(product) {
+      return Number(product?.harga ?? product?.harga_jual ?? 0)
+    },
+    formatCurrency(value) {
+      return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        maximumFractionDigits: 0,
+      }).format(Number(value) || 0)
+    },
     async submitUpload() {
       if (
         !this.uploadForm.name ||
         !this.uploadForm.code ||
         !this.uploadForm.category_id ||
+        this.uploadForm.harga === '' ||
+        this.uploadForm.harga === null ||
         !this.uploadForm.file
       ) {
         this.uploadStatus = 'Semua field wajib diisi.'
@@ -390,6 +410,7 @@ export default {
       formData.append('nama', this.uploadForm.name)
       formData.append('kode', this.uploadForm.code)
       formData.append('category_id', this.uploadForm.category_id)
+      formData.append('harga', Number(this.uploadForm.harga) || 0)
       formData.append('file', this.uploadForm.file)
       try {
         // Ganti URL berikut dengan endpoint backend Anda
@@ -401,7 +422,7 @@ export default {
         this.uploadStatus = response.data.message || 'Upload berhasil!'
         this.products.push(response.data.data)
         // Reset form
-        this.uploadForm = { name: '', code: '', category_id: '', file: null }
+        this.uploadForm = { name: '', code: '', category_id: '', harga: 0, file: null }
         setTimeout(() => {
           this.uploadStatus = ''
           this.showModal = false

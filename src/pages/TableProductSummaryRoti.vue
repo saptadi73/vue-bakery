@@ -38,6 +38,7 @@
             <th>No</th>
             <th>Nama Produk</th>
             <th>Kode</th>
+            <th>Harga</th>
             <th>Stok</th>
             <th>Total Order</th>
             <th>Kategori</th>
@@ -48,6 +49,7 @@
             <td>{{ index + 1 }}</td>
             <td>{{ product.nama }}</td>
             <td>{{ product.kode }}</td>
+            <td>{{ formatCurrency(product.harga ?? product.harga_jual ?? 0) }}</td>
             <td>{{ product.stock }}</td>
             <td>{{ product.total_orders }}</td>
             <td>
@@ -55,7 +57,7 @@
             </td>
           </tr>
           <tr v-if="filteredProducts.length === 0">
-            <td colspan="6" class="empty-state">Tidak ada data ditemukan.</td>
+            <td colspan="7" class="empty-state">Tidak ada data ditemukan.</td>
           </tr>
         </tbody>
       </table>
@@ -106,6 +108,13 @@ export default {
     this.fetchProducts()
   },
   methods: {
+    formatCurrency(value) {
+      return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        maximumFractionDigits: 0,
+      }).format(Number(value) || 0)
+    },
     async fetchProducts() {
       this.isLoading = true
       try {

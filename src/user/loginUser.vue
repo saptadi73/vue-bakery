@@ -80,9 +80,30 @@ const showToast = ref(false)
 const toastMessage = ref('')
 const loginSuccess = ref(false)
 
+function unwrapEnvelope(payload) {
+  let current = payload
+  let safety = 0
+  while (
+    current &&
+    typeof current === 'object' &&
+    'data' in current &&
+    'status' in current &&
+    safety < 5
+  ) {
+    current = current.data
+    safety += 1
+  }
+  return current
+}
+
 async function login() {
   localStorage.removeItem('token')
   localStorage.removeItem('role')
+  localStorage.removeItem('role_id')
+  localStorage.removeItem('outlet_id')
+  localStorage.removeItem('outlet_name')
+  localStorage.removeItem('username')
+  localStorage.removeItem('user_id')
   localStorage.removeItem('email')
   const email = document.getElementById('email').value
   const password = document.getElementById('password').value
@@ -94,16 +115,23 @@ async function login() {
       },
     })
 
-    if (response.data.status == true) {
-      // console.log(response.data.data.level.nama);
-      const token = response.data.data.token
-      const role_id = response.data.data.role_id
-      const role = response.data.data.role
-      const outlet_id = response.data.data.outlet_id
-      const outlet_name = response.data.data.outlet_name
-      const username = response.data.data.user.name
-      const user_id = response.data.data.user.id
-      // console.log('datanya role', role);
+    const root = response?.data
+    const payload = unwrapEnvelope(root)
+    const status = root?.status === true || payload?.status === true
+
+    if (status) {
+      const token = payload?.token
+      const role_id = payload?.role_id ?? payload?.user?.role_id ?? ''
+      const role = payload?.role ?? ''
+      const outlet_id = payload?.outlet_id ?? payload?.user?.outlet_id ?? ''
+      const outlet_name = payload?.outlet_name ?? ''
+      const username = payload?.user?.name ?? ''
+      const user_id = payload?.user?.id ?? ''
+
+      if (!token) {
+        throw new Error(root?.message || 'Token tidak ditemukan pada response login')
+      }
+
       localStorage.setItem('token', token)
       localStorage.setItem('role', role)
       localStorage.setItem('email', email)
@@ -114,17 +142,18 @@ async function login() {
       localStorage.setItem('outlet_name', outlet_name)
       loginSuccess.value = true
       showToast.value = true
-      toastMessage.value = response.data.message
+      toastMessage.value = root?.message || 'Login berhasil'
     } else {
       loginSuccess.value = false
       showToast.value = true
-      toastMessage.value = 'Salah Email dan Password'
-      console.log(response.data)
+      toastMessage.value = root?.message || 'Salah Email dan Password'
+      console.log(root)
     }
   } catch (error) {
     loginSuccess.value = false
     showToast.value = true
-    toastMessage.value = 'Salah Email dan Password'
+    toastMessage.value =
+      error?.response?.data?.message || error?.message || 'Salah Email dan Password'
     console.log(error)
   }
 }
